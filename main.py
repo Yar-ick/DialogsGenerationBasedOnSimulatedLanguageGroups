@@ -60,5 +60,7 @@ if __name__ == '__main__':
     # start()
 
     root = tkinter.Tk()
-    root.title('My App')
+    root.title('Dialogus')
+    root.iconbitmap(default="Icon.ico")
+    root.geometry("1280x720")
     root.mainloop()
