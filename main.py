@@ -260,8 +260,7 @@ def launch_tkinter_app():
     labeled_sounds_table.pack(expand=False, anchor="w", side="left")
     labeled_sounds_table.heading("Sound1", text="Заменяемый звук")
     labeled_sounds_table.heading("Sound2", text="Заменяющий звук")
-    labeled_sounds_table_scrollbar = ttk.Scrollbar(labeled_sounds_frame, orient="vertical",
-                                                   command=labeled_sounds_table.yview)
+    labeled_sounds_table_scrollbar = ttk.Scrollbar(labeled_sounds_frame, orient="vertical", command=labeled_sounds_table.yview)
     labeled_sounds_table.configure(yscroll=labeled_sounds_table_scrollbar.set)
     labeled_sounds_table_scrollbar.pack(side="left", fill="y")
 
@@ -373,6 +372,24 @@ def launch_tkinter_app():
 
     """------------------------------LABELED SOUNDS SECTION------------------------------"""
     # endregion
+
+    save_label = ttk.Label(
+        language_group_frame,
+        text="Сохранение:",
+        font=("Segoe UI", 14, "bold"),
+        background="#000000"
+    )
+    save_label.pack(expand=False, fill=X, anchor="w", ipady=5, padx=15, pady=15)
+
+    def on_save_button_clicked():
+        print("Saved")
+
+    save_button = ttk.Button(
+        language_group_frame,
+        text="Сохранить языковую группу",
+        command=on_save_button_clicked
+    )
+    save_button.pack(fill=BOTH, padx=15)
 
     language_group_frame.pack(fill=BOTH, expand=True)
 
