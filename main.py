@@ -3,6 +3,9 @@ import lexical_units
 import isolation_degree
 import labeled_sounds
 import sv_ttk
+import json
+import locale
+import sys
 
 # from characterai import PyCAI
 from tkinter import *
@@ -59,6 +62,9 @@ def launch_nltk_installer():
 
 
 def launch_tkinter_app():
+    def on_combobox_selected(event):
+        event.widget.selection_clear()
+
     window = Tk()
     sv_ttk.set_theme("dark")
     window.title('Диалогус')
@@ -78,7 +84,7 @@ def launch_tkinter_app():
     notebook.pack(expand=True, fill=BOTH)
 
     # region LanguageGroupFrame
-    """------------------------------LANGUAGE GROUP FRAME------------------------------"""
+    """------------------------------LANGUAGE GROUP FRAME SECTION------------------------------"""
 
     language_group_frame = ttk.Frame(notebook)
 
@@ -96,9 +102,6 @@ def launch_tkinter_app():
         background="#000000"
     )
     word_order_label.pack(expand=False, fill=X, anchor="w", ipady=5, padx=15, pady=15)
-
-    def on_word_order_combobox_selected(event):
-        word_order_combobox.selection_clear()
 
     word_orders = [
         "Подлежащее -> сказуемое  -> дополнение",
@@ -119,9 +122,9 @@ def launch_tkinter_app():
     )
 
     word_order_combobox.pack(expand=False, anchor="w", ipady=5, padx=15)
-    word_order_combobox.bind("<<ComboboxSelected>>", on_word_order_combobox_selected)
+    word_order_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
 
-    """------------------------------WORD ORDER SECTION------------------------------"""
+    """------------------------------WORD ORDER SECTION END------------------------------"""
     # endregion
 
     # region LexicalUnits
@@ -137,29 +140,30 @@ def launch_tkinter_app():
 
     lexical_units_frame = ttk.Frame(language_group_frame)
 
-    spacer_before_lexical_unit_table = ttk.Frame(lexical_units_frame)
-    spacer_before_lexical_unit_table.pack(side="left", padx=7.5)
+    ttk.Frame(lexical_units_frame).pack(side="left", padx=7.5)  # Spacer before lexical units table
 
     lexical_unit_columns = ("Word1", "Word2")
-    lexical_unit_table = ttk.Treeview(lexical_units_frame, columns=lexical_unit_columns, show="headings")
-    lexical_unit_table.pack(expand=False, anchor="w", side="left")
-    lexical_unit_table.heading("Word1", text="Заменяемое слово")
-    lexical_unit_table.heading("Word2", text="Заменяющее слово")
-    lexical_unit_table_scrollbar = ttk.Scrollbar(lexical_units_frame, orient="vertical",
-                                                 command=lexical_unit_table.yview)
-    lexical_unit_table.configure(yscroll=lexical_unit_table_scrollbar.set)
+    lexical_units_table = ttk.Treeview(lexical_units_frame, columns=lexical_unit_columns, show="headings")
+    lexical_units_table.pack(expand=False, anchor="w", side="left")
+    lexical_units_table.heading("Word1", text="Заменяемое слово")
+    lexical_units_table.heading("Word2", text="Заменяющее слово")
+    lexical_unit_table_scrollbar = ttk.Scrollbar(
+        lexical_units_frame,
+        orient="vertical",
+        command=lexical_units_table.yview
+    )
+    lexical_units_table.configure(yscroll=lexical_unit_table_scrollbar.set)
     lexical_unit_table_scrollbar.pack(side="left", fill="y")
 
     lexical_unit_couples = [("терпение", "халтура"), ("наблюдательность", "безолаберность")]
 
     for lexical_unit in lexical_unit_couples:
-        lexical_unit_table.insert("", END, values=lexical_unit)
+        lexical_units_table.insert("", END, values=lexical_unit)
 
-    spacer_after_lexical_unit_table = ttk.Frame(lexical_units_frame)
-    spacer_after_lexical_unit_table.pack(side="left", padx=7.5)
+    ttk.Frame(lexical_units_frame).pack(side="left", padx=7.5)  # Spacer after lexical units table
 
     def on_add_lexical_unit_button_clicked():
-        lexical_unit_table.insert("", END, values=(first_word_entry.get(), second_word_entry.get()))
+        lexical_units_table.insert("", END, values=(first_word_entry.get(), second_word_entry.get()))
 
     lexical_unit_table_buttons_frame = ttk.Frame(lexical_units_frame)
     add_lexical_unit_button = ttk.Button(
@@ -170,8 +174,8 @@ def launch_tkinter_app():
     add_lexical_unit_button.pack(anchor="e", side="left")
 
     def on_remove_lexical_unit_button_clicked():
-        for selected_item in lexical_unit_table.selection():
-            lexical_unit_table.delete(selected_item)
+        for selected_item in lexical_units_table.selection():
+            lexical_units_table.delete(selected_item)
 
     remove_lexical_unit_button = ttk.Button(
         lexical_unit_table_buttons_frame,
@@ -201,7 +205,7 @@ def launch_tkinter_app():
     lexical_unit_table_input_fields_frame.pack(expand=False, anchor="w", pady=15)
     lexical_units_frame.pack(expand=False, anchor="w")
 
-    """------------------------------LEXICAL UNITS SECTION------------------------------"""
+    """------------------------------LEXICAL UNITS SECTION END------------------------------"""
     # endregion
 
     # region IsolationDegree
@@ -236,7 +240,7 @@ def launch_tkinter_app():
     )
     isolation_degree_horizontal_scale.pack(expand=False, anchor="w", padx=15)
 
-    """------------------------------ISOLATION DEGREE SECTION------------------------------"""
+    """------------------------------ISOLATION DEGREE SECTION END------------------------------"""
     # endregion
 
     # region LabeledSounds
@@ -252,24 +256,29 @@ def launch_tkinter_app():
 
     labeled_sounds_frame = ttk.Frame(language_group_frame)
 
-    spacer_before_labeled_sound_table = ttk.Frame(labeled_sounds_frame)
-    spacer_before_labeled_sound_table.pack(side="left", padx=7.5)
+    ttk.Frame(labeled_sounds_frame).pack(side="left", padx=7.5)  # Spacer before labeled sound table
 
     labeled_sound_columns = ("Sound1", "Sound2")
     labeled_sounds_table = ttk.Treeview(labeled_sounds_frame, columns=labeled_sound_columns, show="headings")
     labeled_sounds_table.pack(expand=False, anchor="w", side="left")
     labeled_sounds_table.heading("Sound1", text="Заменяемый звук")
     labeled_sounds_table.heading("Sound2", text="Заменяющий звук")
-    labeled_sounds_table_scrollbar = ttk.Scrollbar(labeled_sounds_frame, orient="vertical", command=labeled_sounds_table.yview)
+    labeled_sounds_table_scrollbar = ttk.Scrollbar(
+        labeled_sounds_frame,
+        orient="vertical",
+        command=labeled_sounds_table.yview
+    )
     labeled_sounds_table.configure(yscroll=labeled_sounds_table_scrollbar.set)
     labeled_sounds_table_scrollbar.pack(side="left", fill="y")
 
-    spacer_after_labeled_sound_table = ttk.Frame(labeled_sounds_frame)
-    spacer_after_labeled_sound_table.pack(side="left", padx=7.5)
+    ttk.Frame(labeled_sounds_frame).pack(side="left", padx=7.5)  # Spacer after labeled sound table
 
     def on_add_labeled_sound_button_clicked():
-        labeled_sounds_table.insert("", END,
-                                    values=(first_labeled_sound_combobox.get(), second_labeled_sound_combobox.get()))
+        labeled_sounds_table.insert(
+            "",
+            END,
+            values=(first_labeled_sound_combobox.get(), second_labeled_sound_combobox.get())
+        )
 
     labeled_sound_table_buttons_frame = ttk.Frame(labeled_sounds_frame)
     add_labeled_sound_button = ttk.Button(
@@ -301,9 +310,6 @@ def launch_tkinter_app():
                              'ң', 'о', 'ө', 'п', 'р', 'с', 'т', 'у', 'ұ', 'ү', 'ф', 'х', 'һ', 'ц', 'ч', 'ш', 'щ', 'ъ',
                              'ы', 'і', 'ь', 'э', 'ю', 'я']
 
-    def on_first_labeled_sound_combobox_selected(event):
-        first_labeled_sound_combobox.selection_clear()
-
     default_first_labeled_sound = StringVar(value=russian_labeled_sounds[0])
 
     first_labeled_sound_combobox = ttk.Combobox(
@@ -313,7 +319,7 @@ def launch_tkinter_app():
         width=2
     )
     first_labeled_sound_combobox.pack(anchor="e", side="left")
-    first_labeled_sound_combobox.bind("<<ComboboxSelected>>", on_first_labeled_sound_combobox_selected)
+    first_labeled_sound_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
 
     switch_on_labeled_sound_label = ttk.Label(
         labeled_sound_table_input_fields_frame,
@@ -353,9 +359,6 @@ def launch_tkinter_app():
     spacer_after_labeled_sound_language_combobox = ttk.Frame(labeled_sound_table_input_fields_frame)
     spacer_after_labeled_sound_language_combobox.pack(side="left", padx=7.5)
 
-    def on_second_labeled_sound_combobox_selected(event):
-        second_labeled_sound_combobox.selection_clear()
-
     default_second_labeled_sound = StringVar(value=russian_labeled_sounds[0])
 
     second_labeled_sound_combobox = ttk.Combobox(
@@ -365,13 +368,16 @@ def launch_tkinter_app():
         width=2
     )
     second_labeled_sound_combobox.pack(anchor="e", side="left")
-    second_labeled_sound_combobox.bind("<<ComboboxSelected>>", on_second_labeled_sound_combobox_selected)
+    second_labeled_sound_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
 
     labeled_sound_table_input_fields_frame.pack(expand=False, anchor="w", pady=15)
     labeled_sounds_frame.pack(expand=False, anchor="w")
 
-    """------------------------------LABELED SOUNDS SECTION------------------------------"""
+    """------------------------------LABELED SOUNDS SECTION END------------------------------"""
     # endregion
+
+    # region Saving
+    """------------------------------SAVING SECTION------------------------------"""
 
     save_label = ttk.Label(
         language_group_frame,
@@ -381,19 +387,58 @@ def launch_tkinter_app():
     )
     save_label.pack(expand=False, fill=X, anchor="w", ipady=5, padx=15, pady=15)
 
+    save_input_frame = ttk.Frame(language_group_frame)
+
+    # language_group_label = ttk.Label(
+    #     save_input_frame,
+    #     text="Имя моделируемой языковой группы:",
+    #     font=("Segoe UI", 12)
+    # )
+    # language_group_label.pack(expand=False, side="left")
+
+    language_group_name_entry = ttk.Entry(save_input_frame, width=32)
+    language_group_name_entry.insert(0, "Имя моделируемой языковой группы")
+    language_group_name_entry.pack(side="left")
+
     def on_save_button_clicked():
-        print("Saved")
+        lexical_units_to_write = {}
+        labeled_sounds_to_write = {}
+
+        for child in lexical_units_table.get_children(""):
+            lexical_units_to_write.update({lexical_units_table.set(child, 0): lexical_units_table.set(child, 1)})
+
+        for child in labeled_sounds_table.get_children(""):
+            labeled_sounds_to_write.update({labeled_sounds_table.set(child, 0): labeled_sounds_table.set(child, 1)})
+
+        save_dictionary = {
+            "language_group_name": language_group_name_entry.get(),
+            "word_order": word_order_combobox.current(),
+            "lexical_units": lexical_units_to_write,
+            "isolation_degree": isolation_degree_value.get(),
+            "labeled_sounds": labeled_sounds_to_write
+        }
+
+        json_save = json.dumps(save_dictionary, indent=4, ensure_ascii=False)
+        # json_save = json_save.encode("utf-8").decode("utf-8")
+
+        with open("LanguageGroups.json", "a", encoding='utf-8') as outfile:
+            outfile.write(json_save)
 
     save_button = ttk.Button(
-        language_group_frame,
+        save_input_frame,
         text="Сохранить языковую группу",
         command=on_save_button_clicked
     )
-    save_button.pack(fill=BOTH, padx=15)
+    save_button.pack(fill=BOTH, side="left", padx=15)
+
+    save_input_frame.pack(anchor="w", padx=15)
+
+    """------------------------------SAVING SECTION END------------------------------"""
+    # endregion
 
     language_group_frame.pack(fill=BOTH, expand=True)
 
-    """------------------------------LANGUAGE GROUP FRAME------------------------------"""
+    """------------------------------LANGUAGE GROUP FRAME SECTION END------------------------------"""
     # endregion
 
     # region GenerationFrame
@@ -420,3 +465,4 @@ def launch_tkinter_app():
 if __name__ == '__main__':
     # start()
     launch_tkinter_app()
+    # print(sys.stdout.encoding)
