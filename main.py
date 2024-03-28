@@ -6,6 +6,7 @@ import sv_ttk
 import json
 import locale
 import sys
+import os.path
 
 # from characterai import PyCAI
 from tkinter import *
@@ -65,6 +66,20 @@ def launch_tkinter_app():
     def on_combobox_selected(event):
         event.widget.selection_clear()
 
+    def load_saved_language_groups(in_list):
+        if os.path.isfile("./LanguageGroups.json"):
+            with open("LanguageGroups.json", 'r', encoding="utf-8") as infile:
+                language_groups_from_json = json.load(infile)
+
+                for language_group in language_groups_from_json:
+                    in_list.append(language_group)
+
+    def refill_language_groups_for_combobox(in_language_groups_for_combobox, in_saved_language_groups):
+        in_language_groups_for_combobox.clear()
+
+        for language_group in in_saved_language_groups:
+            in_language_groups_for_combobox.append(language_group["language_group_name"])
+
     window = Tk()
     sv_ttk.set_theme("dark")
     window.title('Диалогус')
@@ -78,6 +93,11 @@ def launch_tkinter_app():
     y = (hs / 2) - (h / 2)
 
     window.geometry("%dx%d+%d+%d" % (w, h, x, y))
+
+    saved_language_groups = []
+    load_saved_language_groups(saved_language_groups)
+
+    language_groups_for_combobox = []
 
     # Создание набора вкладок для разных задач
     notebook = ttk.Notebook()
@@ -281,6 +301,7 @@ def launch_tkinter_app():
         )
 
     labeled_sound_table_buttons_frame = ttk.Frame(labeled_sounds_frame)
+
     add_labeled_sound_button = ttk.Button(
         labeled_sound_table_buttons_frame,
         text="Добавить",
@@ -401,6 +422,7 @@ def launch_tkinter_app():
     language_group_name_entry.pack(side="left")
 
     def on_save_button_clicked():
+        saved_language_groups.clear()
         lexical_units_to_write = {}
         labeled_sounds_to_write = {}
 
@@ -417,11 +439,16 @@ def launch_tkinter_app():
             "isolation_degree": isolation_degree_value.get(),
             "labeled_sounds": labeled_sounds_to_write
         }
+        saved_language_groups.append(save_dictionary)
 
-        json_save = json.dumps(save_dictionary, indent=4, ensure_ascii=False)
+        load_saved_language_groups(saved_language_groups)
+        refill_language_groups_for_combobox(language_groups_for_combobox, saved_language_groups)
+        selected_language_group_combobox.configure(values=language_groups_for_combobox)
+
+        json_save = json.dumps(saved_language_groups, indent=4, ensure_ascii=False)
         # json_save = json_save.encode("utf-8").decode("utf-8")
 
-        with open("LanguageGroups.json", "a", encoding='utf-8') as outfile:
+        with open("LanguageGroups.json", "w", encoding="utf-8") as outfile:
             outfile.write(json_save)
 
     save_button = ttk.Button(
@@ -446,6 +473,50 @@ def launch_tkinter_app():
 
     generation_frame = ttk.Frame(notebook)
 
+    selected_language_group_frame = ttk.Frame(generation_frame)
+
+    selected_language_group_label = ttk.Label(
+        selected_language_group_frame,
+        text="Моделируемая языковая группа:",
+        font=("Segoe UI", 12)
+    )
+    selected_language_group_label.pack(expand=False, anchor="w", side="left")
+
+    refill_language_groups_for_combobox(language_groups_for_combobox, saved_language_groups)
+
+    default_language_group_choice = StringVar(value=language_groups_for_combobox[0])
+
+    selected_language_group_combobox = ttk.Combobox(
+        selected_language_group_frame,
+        textvariable=default_language_group_choice,
+        values=language_groups_for_combobox,
+        state='readonly',
+        width=41,
+    )
+
+    selected_language_group_combobox.pack(expand=False, anchor="w", ipady=1, padx=15)
+    selected_language_group_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
+
+    selected_character_frame = ttk.Frame(generation_frame)
+
+    selected_character_label = ttk.Label(
+        selected_character_frame,
+        text="Токен персонажа CharacterAI:",
+        font=("Segoe UI", 12)
+    )
+    selected_character_label.pack(expand=False, anchor="w", side="left")
+
+    character_token_entry = ttk.Entry(selected_character_frame, width=45)
+    character_token_entry.insert(0, "BfIwQWZcLBjFI4f7pzE3a24pmKM0DrTTkb75KatQC8w")
+    character_token_entry.pack(anchor="e", side="left", padx=37)
+
+    chat_text = Text(generation_frame, height=20, font=("Segoe UI", 12))
+
+    ttk.Frame(generation_frame).pack(pady=7.5)  # Horizontal spacer before all
+    selected_language_group_frame.pack(anchor="w", padx=15)
+    ttk.Frame(generation_frame).pack(pady=7.5)  # Horizontal spacer between selected_language_group and selected_character
+    selected_character_frame.pack(anchor="w", padx=15)
+    chat_text.pack(anchor="w", fill=X, padx=15, pady=15)
     generation_frame.pack(fill=BOTH, expand=True)
 
     """------------------------------GENERATION FRAME------------------------------"""
