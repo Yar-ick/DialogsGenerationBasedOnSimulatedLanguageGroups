@@ -8,7 +8,8 @@ import locale
 import sys
 import os.path
 
-# from characterai import PyCAI
+from characterai import PyCAI
+from deep_translator import GoogleTranslator
 from tkinter import *
 from tkinter import ttk
 from ttkthemes import ThemedTk
@@ -38,7 +39,7 @@ def start():
 
     base_text = text.split(".")
 
-    # result = word_order.change_text_word_order(text, word_order.WordOrder.VerbSubjectObject, False)
+    result = word_order.change_text_word_order(text, word_order.WordOrder.VerbSubjectObject, False)
     result = lexical_units.replace_lexical_units_in_text(text, lexical_unit_couples)
     result = isolation_degree.change_text_isolation_degree(result, 2)
     result = labeled_sounds.apply_labeled_sounds_to_text(result, labeled_sound_couples)
@@ -80,6 +81,13 @@ def launch_tkinter_app():
         for language_group in in_saved_language_groups:
             in_language_groups_for_combobox.append(language_group["language_group_name"])
 
+    def get_language_group_from_list(in_language_groups, in_language_group_name):
+        for language_group in in_language_groups:
+            # print(language_group)
+            # print(type(language_group))
+            if language_group["language_group_name"] == in_language_group_name:
+                return language_group
+
     window = Tk()
     sv_ttk.set_theme("dark")
     window.title('Диалогус')
@@ -95,6 +103,7 @@ def launch_tkinter_app():
     window.geometry("%dx%d+%d+%d" % (w, h, x, y))
 
     saved_language_groups = []
+    # selected_language_group = {}
     load_saved_language_groups(saved_language_groups)
 
     language_groups_for_combobox = []
@@ -484,11 +493,11 @@ def launch_tkinter_app():
 
     refill_language_groups_for_combobox(language_groups_for_combobox, saved_language_groups)
 
-    default_language_group_choice = StringVar(value=language_groups_for_combobox[0])
+    language_group_choice = StringVar(value=language_groups_for_combobox[0])
 
     selected_language_group_combobox = ttk.Combobox(
         selected_language_group_frame,
-        textvariable=default_language_group_choice,
+        textvariable=language_group_choice,
         values=language_groups_for_combobox,
         state='readonly',
         width=41,
@@ -507,19 +516,82 @@ def launch_tkinter_app():
     selected_character_label.pack(expand=False, anchor="w", side="left")
 
     character_token_entry = ttk.Entry(selected_character_frame, width=45)
-    character_token_entry.insert(0, "BfIwQWZcLBjFI4f7pzE3a24pmKM0DrTTkb75KatQC8w")
+    character_token_entry.insert(0, "BfIwQWZcLBjFI4f7pzE3a24pmKM0DrTTkb75KatQC8w")  # Default character token
     character_token_entry.pack(anchor="e", side="left", padx=37)
 
-    chat_text = Text(generation_frame, height=20, font=("Segoe UI", 12))
+    chat_text = Text(generation_frame, height=20, font=("Segoe UI", 12), wrap="word")
+
+    send_prompt_image = PhotoImage(file="./icons/SendPrompt.png")
+    send_prompt_image = send_prompt_image.subsample(3, 3)
+
+    def on_start_conversation_button_clicked():
+        client = PyCAI("42f1d0ea1d29f9a116c4b9d7ce75748f757a949a")
+        chat = client.chat.get_chat(character_token_entry.get())
+
+        participants = chat['participants']
+
+        if not participants[0]['is_human']:
+            tgt = participants[0]['user']['username']
+        else:
+            tgt = participants[1]['user']['username']
+
+        start_conversation_button.destroy()
+        prompt_frame = ttk.Frame(generation_frame)
+
+        prompt_entry = ttk.Entry(prompt_frame)
+        prompt_entry.pack(expand=True, fill=X, ipady=2, side="left")
+        ttk.Frame(prompt_frame).pack(side="left", padx=7.5)  # Vertical spacer before send prompt button
+
+        def on_send_prompt_button_clicked():
+            if prompt_entry.get():
+                chat_text.insert(END, "Вы: " + prompt_entry.get() + "\n\n")
+
+                data = client.chat.send_message(
+                    chat['external_id'], tgt, prompt_entry.get()
+                )
+
+                prompt_entry.delete(0, END)
+
+                character_name = data['src_char']['participant']['name']
+                text = data['replies'][0]['text']
+                translated_text = GoogleTranslator(source='en', target='ru').translate(text)
+                selected_language_group = get_language_group_from_list(saved_language_groups, language_group_choice.get())
+
+                result = word_order.change_text_word_order(translated_text, word_order.WordOrder(selected_language_group["word_order"]), False)
+                result = lexical_units.replace_lexical_units_in_text(result, selected_language_group["lexical_units"])
+                result = isolation_degree.change_text_isolation_degree(result, selected_language_group["isolation_degree"])
+                result = labeled_sounds.apply_labeled_sounds_to_text(result, selected_language_group["labeled_sounds"])
+
+                result_for_print = result.split(".")
+
+                chat_text.insert(END, character_name + ": " + result + "\n\n")
+
+        send_prompt_button = ttk.Button(
+            prompt_frame,
+            width=10,
+            image=send_prompt_image,
+            command=on_send_prompt_button_clicked
+        )
+        send_prompt_button.pack(side="left")
+
+        prompt_frame.pack(fill=X, anchor="w", padx=15)
+
+    start_conversation_button = ttk.Button(
+        generation_frame,
+        text="Начать общение",
+        command=on_start_conversation_button_clicked
+    )
 
     ttk.Frame(generation_frame).pack(pady=7.5)  # Horizontal spacer before all
     selected_language_group_frame.pack(anchor="w", padx=15)
-    ttk.Frame(generation_frame).pack(pady=7.5)  # Horizontal spacer between selected_language_group and selected_character
+    ttk.Frame(generation_frame).pack(
+        pady=7.5)  # Horizontal spacer between selected_language_group and selected_character
     selected_character_frame.pack(anchor="w", padx=15)
     chat_text.pack(anchor="w", fill=X, padx=15, pady=15)
+    start_conversation_button.pack(expand=True, fill=X, side="left", anchor="n", padx=15)
     generation_frame.pack(fill=BOTH, expand=True)
 
-    """------------------------------GENERATION FRAME------------------------------"""
+    """------------------------------GENERATION FRAME SECTION END------------------------------"""
     # endregion
 
     language_group_logo = PhotoImage(file="./icons/LanguageGroup.png")

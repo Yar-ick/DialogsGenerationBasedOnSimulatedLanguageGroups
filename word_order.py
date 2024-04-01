@@ -6,12 +6,12 @@ from pymorphy3 import MorphAnalyzer
 
 
 class WordOrder(Enum):
-    SubjectVerbObject = 1
-    SubjectObjectVerb = 2
-    VerbSubjectObject = 3
-    VerbObjectSubject = 4
-    ObjectVerbSubject = 5
-    ObjectSubjectVerb = 6
+    SubjectVerbObject = 0
+    SubjectObjectVerb = 1
+    VerbSubjectObject = 2
+    VerbObjectSubject = 3
+    ObjectVerbSubject = 4
+    ObjectSubjectVerb = 5
 
 
 def is_token_from_subject_phrase(token):
@@ -37,6 +37,9 @@ def is_token_from_subject_phrase(token):
 
 
 def change_text_word_order(text, word_order, print_help_info=False):
+    if word_order == WordOrder.SubjectVerbObject:
+        return text
+
     nlp = spacy.load("ru_core_news_lg")
     out_text = ""
     sentence_tokens = nltk.sent_tokenize(text)

@@ -3,6 +3,9 @@ from nltk.tokenize import word_tokenize
 
 
 def change_text_isolation_degree(text, isolation_degree):
+    if isolation_degree == 0:
+        return text
+
     morph = MorphAnalyzer()
     word_tokens = word_tokenize(text)
     index = 0
