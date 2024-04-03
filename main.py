@@ -4,58 +4,13 @@ import isolation_degree
 import labeled_sounds
 import sv_ttk
 import json
-import locale
-import sys
 import os.path
 
 from characterai import PyCAI
 from deep_translator import GoogleTranslator
 from tkinter import *
 from tkinter import ttk
-from ttkthemes import ThemedTk
-
-
-def start():
-    text = ("Чтобы успешно охотиться, важно обладать терпением и наблюдательностью. Обратите внимание на существ, "
-            "на которых вы охотитесь, изучите их повадки и поведение. Изучив их, спланируйте атаку и нанесите "
-            "решающую и смертоносную силу. Будьте бдительны и осторожны, ведь небольшие ошибки могут привести к "
-            "плачевным результатам. Никогда не недооценивайте добычу, поскольку даже самое маленькое существо может "
-            "причинить вам вред, если вы не будете полностью задействованы.")
-
-    lexical_unit_couples = {
-        'терпение': 'халтура',
-        'наблюдательность': 'безолаберность',
-        'поведение': 'запах',
-        'сила': 'мощь',
-        'быть': 'являться',
-        'спланировать': 'набросать',
-        'недооценивать': 'унижать'
-    }
-
-    labeled_sound_couples = {
-        'г': 'ғ',
-        'е': 'ε'
-    }
-
-    base_text = text.split(".")
-
-    result = word_order.change_text_word_order(text, word_order.WordOrder.VerbSubjectObject, False)
-    result = lexical_units.replace_lexical_units_in_text(text, lexical_unit_couples)
-    result = isolation_degree.change_text_isolation_degree(result, 2)
-    result = labeled_sounds.apply_labeled_sounds_to_text(result, labeled_sound_couples)
-
-    result_for_print = result.split(".")
-
-    print("\nИсходный текст ответа: ")
-    for sentence in base_text:
-        if sentence != " ":
-            print(sentence, ".")
-
-    print("\n")
-
-    print("Преобразованный ответ: ")
-    for sentence in result_for_print:
-        print(sentence, ".")
+from tktooltip import ToolTip
 
 
 def launch_nltk_installer():
@@ -64,6 +19,9 @@ def launch_nltk_installer():
 
 
 def launch_tkinter_app():
+    def on_notebook_tab_selected(event):
+        event.widget.selection_clear()
+
     def on_combobox_selected(event):
         event.widget.selection_clear()
 
@@ -111,6 +69,7 @@ def launch_tkinter_app():
     # Создание набора вкладок для разных задач
     notebook = ttk.Notebook()
     notebook.pack(expand=True, fill=BOTH)
+    notebook.bind("<<NotebookTabChanged>>", on_notebook_tab_selected)
 
     # region LanguageGroupFrame
     """------------------------------LANGUAGE GROUP FRAME SECTION------------------------------"""
@@ -133,12 +92,12 @@ def launch_tkinter_app():
     word_order_label.pack(expand=False, fill=X, anchor="w", ipady=5, padx=15, pady=15)
 
     word_orders = [
-        "Подлежащее -> сказуемое  -> дополнение",
-        "Подлежащее -> дополнение -> сказуемое",
-        "Сказуемое  -> подлежащее -> дополнение",
-        "Сказуемое  -> дополнение -> подлежащее",
-        "Дополнение -> сказуемое  -> подлежащее",
-        "Дополнение -> подлежащее -> сказуемое"
+        "Подлежащее 🠊 сказуемое 🠊 дополнение",
+        "Подлежащее 🠊 дополнение 🠊 сказуемое",
+        "Сказуемое 🠊 подлежащее 🠊 дополнение",
+        "Сказуемое 🠊 дополнение 🠊 подлежащее",
+        "Дополнение 🠊 сказуемое 🠊 подлежащее",
+        "Дополнение 🠊 подлежащее 🠊 сказуемое"
     ]
     default_word_order_choice = StringVar(value=word_orders[0])
 
@@ -268,6 +227,12 @@ def launch_tkinter_app():
         command=isolation_degree_horizontal_scale_changed
     )
     isolation_degree_horizontal_scale.pack(expand=False, anchor="w", padx=15)
+    tooltip = ToolTip(
+        isolation_degree_horizontal_scale,
+        msg="Чем выше степень изолированности, тем больше слов будет поставлено в нормальную форму",
+        follow=True,
+        refresh=60
+    )
 
     """------------------------------ISOLATION DEGREE SECTION END------------------------------"""
     # endregion
@@ -477,6 +442,81 @@ def launch_tkinter_app():
     """------------------------------LANGUAGE GROUP FRAME SECTION END------------------------------"""
     # endregion
 
+    # region TextTransformationFrame
+    """------------------------------TEXT TRANSFORMATION FRAME SECTION------------------------------"""
+
+    text_transformation_frame = ttk.Frame(notebook)
+
+    fast_settings_frame = ttk.Frame(text_transformation_frame)
+
+    fast_settings_label = ttk.Label(
+        fast_settings_frame,
+        text="Быстрые настройки:",
+        font=("Segoe UI", 14, "bold"),
+        background="#000000"
+    )
+
+    selected_language_group_fast_frame = ttk.Frame(fast_settings_frame)
+
+    selected_language_group_fast_label = ttk.Label(
+        selected_language_group_fast_frame,
+        text="Исходная языковая группа:",
+        font=("Segoe UI", 12)
+    )
+
+    refill_language_groups_for_combobox(language_groups_for_combobox, saved_language_groups)
+
+    language_group_fast_choice = StringVar(value=language_groups_for_combobox[0])
+
+    selected_language_group_fast_combobox = ttk.Combobox(
+        selected_language_group_fast_frame,
+        textvariable=language_group_fast_choice,
+        values=language_groups_for_combobox,
+        state='readonly',
+        width=41,
+    )
+
+    selected_language_group_fast_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
+
+    word_order_fast_choice = StringVar(value=word_orders[0])
+
+    word_order_fast_combobox = ttk.Combobox(
+        fast_settings_frame,
+        textvariable=word_order_fast_choice,
+        values=word_orders,
+        state='readonly',
+        width=45,
+    )
+    word_order_fast_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
+
+    # lexical_unit_columns = ("Word1", "Word2")
+    lexical_units_fast_table = ttk.Treeview(fast_settings_frame, columns=lexical_unit_columns, show="headings")
+    lexical_units_fast_table.heading("Word1", text="Заменяемое слово")
+    lexical_units_fast_table.heading("Word2", text="Заменяющее слово")
+    # lexical_unit_table_scrollbar = ttk.Scrollbar(
+    #     lexical_units_frame,
+    #     orient="vertical",
+    #     command=lexical_units_fast_table.yview
+    # )
+    # lexical_units_table.configure(yscroll=lexical_unit_table_scrollbar.set)
+    # lexical_unit_table_scrollbar.pack(side="left", fill="y")
+
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer before all
+    fast_settings_label.pack(expand=False, fill=X, anchor="w", ipady=5)
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+    selected_language_group_fast_label.pack(expand=False, anchor="w", side="left")
+    selected_language_group_fast_combobox.pack(expand=False, anchor="w", side="left", ipady=1, padx=15)
+    selected_language_group_fast_frame.pack(anchor="w")
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+    word_order_fast_combobox.pack(expand=False, anchor="w", ipady=1)
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+    lexical_units_fast_table.pack(expand=False, anchor="w")
+    fast_settings_frame.pack(anchor="n", side="left", padx=15)
+    text_transformation_frame.pack(fill=BOTH, expand=True)
+
+    """------------------------------TEXT TRANSFORMATION FRAME SECTION END------------------------------"""
+    # endregion
+
     # region GenerationFrame
     """------------------------------GENERATION FRAME------------------------------"""
 
@@ -555,11 +595,15 @@ def launch_tkinter_app():
                 character_name = data['src_char']['participant']['name']
                 text = data['replies'][0]['text']
                 translated_text = GoogleTranslator(source='en', target='ru').translate(text)
-                selected_language_group = get_language_group_from_list(saved_language_groups, language_group_choice.get())
+                selected_language_group = get_language_group_from_list(saved_language_groups,
+                                                                       language_group_choice.get())
 
-                result = word_order.change_text_word_order(translated_text, word_order.WordOrder(selected_language_group["word_order"]), False)
+                result = word_order.change_text_word_order(translated_text,
+                                                           word_order.WordOrder(selected_language_group["word_order"]),
+                                                           False)
                 result = lexical_units.replace_lexical_units_in_text(result, selected_language_group["lexical_units"])
-                result = isolation_degree.change_text_isolation_degree(result, selected_language_group["isolation_degree"])
+                result = isolation_degree.change_text_isolation_degree(result,
+                                                                       selected_language_group["isolation_degree"])
                 result = labeled_sounds.apply_labeled_sounds_to_text(result, selected_language_group["labeled_sounds"])
 
                 result_for_print = result.split(".")
@@ -598,14 +642,15 @@ def launch_tkinter_app():
     language_group_logo = language_group_logo.subsample(20, 20)
     generation_logo = PhotoImage(file="./icons/Generation.png")
     generation_logo = generation_logo.subsample(20, 20)
+    transformation_logo = PhotoImage(file="./icons/Transformation.png")
+    transformation_logo = transformation_logo.subsample(20, 20)
 
     notebook.add(language_group_frame, text="Создание языковой группы", image=language_group_logo, compound=LEFT)
-    notebook.add(generation_frame, text="Генерация", image=generation_logo, compound=LEFT)
+    notebook.add(text_transformation_frame, text="Преобразовние текста", image=transformation_logo, compound=LEFT)
+    notebook.add(generation_frame, text="Общение с персонажем", image=generation_logo, compound=LEFT)
 
     window.mainloop()
 
 
 if __name__ == '__main__':
-    # start()
     launch_tkinter_app()
-    # print(sys.stdout.encoding)
