@@ -51,7 +51,7 @@ def launch_tkinter_app():
     window.title('Диалогус')
     window.iconbitmap(default="./icons/Icon.ico")
 
-    w = 1000
+    w = 1500
     h = 1080
     ws = window.winfo_screenwidth()
     hs = window.winfo_screenheight()
@@ -109,7 +109,7 @@ def launch_tkinter_app():
         width=45,
     )
 
-    word_order_combobox.pack(expand=False, anchor="w", ipady=5, padx=15)
+    word_order_combobox.pack(expand=False, anchor="w", ipady=1, padx=15)
     word_order_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
 
     """------------------------------WORD ORDER SECTION END------------------------------"""
@@ -154,6 +154,7 @@ def launch_tkinter_app():
         lexical_units_table.insert("", END, values=(first_word_entry.get(), second_word_entry.get()))
 
     lexical_unit_table_buttons_frame = ttk.Frame(lexical_units_frame)
+
     add_lexical_unit_button = ttk.Button(
         lexical_unit_table_buttons_frame,
         text="Добавить",
@@ -170,6 +171,7 @@ def launch_tkinter_app():
         text="Удалить",
         command=on_remove_lexical_unit_button_clicked
     )
+
     remove_lexical_unit_button.pack(anchor="e", side="left", padx=15)
     lexical_unit_table_buttons_frame.pack(expand=False, anchor="nw")
 
@@ -207,8 +209,8 @@ def launch_tkinter_app():
     )
     isolation_degree_label.pack(expand=False, fill=X, anchor="w", ipady=5, padx=15, pady=15)
 
-    isolation_degree_value_label = ttk.Label(language_group_frame, text="0", font=("Arial", 10))
-    isolation_degree_value_label.pack(expand=False, anchor="w", padx=210, pady=5)
+    isolation_degree_value_label = ttk.Label(language_group_frame, text="0", font=("Segoe UI", 12))
+    isolation_degree_value_label.pack(expand=False, anchor="w", padx=210)
 
     def isolation_degree_horizontal_scale_changed(new_value):
         float_value = float(new_value)
@@ -227,12 +229,12 @@ def launch_tkinter_app():
         command=isolation_degree_horizontal_scale_changed
     )
     isolation_degree_horizontal_scale.pack(expand=False, anchor="w", padx=15)
-    tooltip = ToolTip(
-        isolation_degree_horizontal_scale,
-        msg="Чем выше степень изолированности, тем больше слов будет поставлено в нормальную форму",
-        follow=True,
-        refresh=60
-    )
+    # tooltip = ToolTip(
+    #     isolation_degree_horizontal_scale,
+    #     msg="Чем выше степень изолированности, тем больше слов будет поставлено в нормальную форму",
+    #     follow=True,
+    #     refresh=60
+    # )
 
     """------------------------------ISOLATION DEGREE SECTION END------------------------------"""
     # endregion
@@ -473,10 +475,17 @@ def launch_tkinter_app():
         textvariable=language_group_fast_choice,
         values=language_groups_for_combobox,
         state='readonly',
-        width=41,
+        width=19,
     )
 
     selected_language_group_fast_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
+
+    word_order_fast_label = ttk.Label(
+        fast_settings_frame,
+        text="Порядок слов:",
+        font=("Segoe UI", 14, "bold"),
+        background="#000000"
+    )
 
     word_order_fast_choice = StringVar(value=word_orders[0])
 
@@ -489,29 +498,273 @@ def launch_tkinter_app():
     )
     word_order_fast_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
 
-    # lexical_unit_columns = ("Word1", "Word2")
-    lexical_units_fast_table = ttk.Treeview(fast_settings_frame, columns=lexical_unit_columns, show="headings")
+    lexical_units_fast_label = ttk.Label(
+        fast_settings_frame,
+        text="Замена лексических единиц:",
+        font=("Segoe UI", 14, "bold"),
+        background="#000000"
+    )
+
+    lexical_units_fast_table_frame = ttk.Frame(fast_settings_frame)
+    lexical_units_fast_table_buttons_frame = ttk.Frame(lexical_units_fast_table_frame)
+    lexical_units_fast_table_other_frame = ttk.Frame(lexical_units_fast_table_frame)
+
+    def on_add_lexical_unit_fast_button_clicked():
+        lexical_units_fast_table.insert("", END, values=('-', '-'))
+
+    def on_remove_lexical_unit_fast_button_clicked():
+        for selected_item in lexical_units_fast_table.selection():
+            lexical_units_fast_table.delete(selected_item)
+
+    add_lexical_unit_fast_button = ttk.Button(
+        lexical_units_fast_table_buttons_frame,
+        text="+",
+        command=on_add_lexical_unit_fast_button_clicked
+    )
+
+    remove_lexical_unit_fast_button = ttk.Button(
+        lexical_units_fast_table_buttons_frame,
+        text="-",
+        command=on_remove_lexical_unit_fast_button_clicked
+    )
+
+    def on_lexical_units_fast_table_item_selected(event):
+        if not event.widget.focus():
+            return
+
+        w = 500
+        h = 110
+        x = (ws / 2) - (w / 2)
+        y = (hs / 2) - (h / 2)
+
+        lexical_units_fast_table_edit_row_window = Tk()
+        lexical_units_fast_table_edit_row_window.resizable(False, False)
+        sv_ttk.set_theme("dark", lexical_units_fast_table_edit_row_window)
+        lexical_units_fast_table_edit_row_window.title("Редактирование строки")
+        lexical_units_fast_table_edit_row_window.geometry("%dx%d+%d+%d" % (w, h, x, y))
+
+        lexical_units_fast_table_edit_row_input_frame = ttk.Frame(lexical_units_fast_table_edit_row_window)
+
+        first_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
+        first_word_fast_entry.insert(0, "Заменяемое слово")
+
+        switch_on_lexical_unit_fast_label = ttk.Label(
+            lexical_units_fast_table_edit_row_input_frame,
+            text="Заменить на:",
+            font=("Segoe UI", 12)
+        )
+
+        second_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
+        second_word_fast_entry.insert(0, "Заменяющее слово")
+
+        lexical_units_fast_table_edit_row_buttons_frame = ttk.Frame(lexical_units_fast_table_edit_row_window)
+
+        def on_confirm_lexical_unit_fast_edit_row_button_clicked():
+            selected_item = lexical_units_fast_table.focus()
+            lexical_units_fast_table.item(
+                selected_item,
+                text="",
+                values=(first_word_fast_entry.get(), second_word_fast_entry.get())
+            )
+            lexical_units_fast_table_edit_row_window.destroy()
+
+        def on_cancel_lexical_unit_fast_edit_row_button_clicked():
+            lexical_units_fast_table_edit_row_window.destroy()
+
+        confirm_lexical_unit_fast_edit_row_button = ttk.Button(
+            lexical_units_fast_table_edit_row_buttons_frame,
+            text="Изменить",
+            command=on_confirm_lexical_unit_fast_edit_row_button_clicked
+        )
+
+        cancel_lexical_unit_fast_edit_row_button = ttk.Button(
+            lexical_units_fast_table_edit_row_buttons_frame,
+            text="Отмена",
+            command=on_cancel_lexical_unit_fast_edit_row_button_clicked
+        )
+
+        first_word_fast_entry.pack(anchor="e", side="left")
+        switch_on_lexical_unit_fast_label.pack(expand=False, anchor="w", side="left", padx=15)
+        second_word_fast_entry.pack(anchor="e", side="left")
+        lexical_units_fast_table_edit_row_input_frame.pack(anchor="nw", padx=15, pady=15)
+
+        confirm_lexical_unit_fast_edit_row_button.pack(fill=X, expand=True, anchor="e", side="left")
+        ttk.Frame(lexical_units_fast_table_edit_row_buttons_frame).pack(side="left", padx=2.5)  # Vertical spacer
+        cancel_lexical_unit_fast_edit_row_button.pack(fill=X, expand=True, anchor="e", side="left")
+        lexical_units_fast_table_edit_row_buttons_frame.pack(fill=X, anchor="w", padx=15)
+
+    lexical_units_fast_table = ttk.Treeview(
+        lexical_units_fast_table_other_frame,
+        columns=lexical_unit_columns,
+        show="headings",
+        height=9
+    )
     lexical_units_fast_table.heading("Word1", text="Заменяемое слово")
     lexical_units_fast_table.heading("Word2", text="Заменяющее слово")
-    # lexical_unit_table_scrollbar = ttk.Scrollbar(
-    #     lexical_units_frame,
-    #     orient="vertical",
-    #     command=lexical_units_fast_table.yview
-    # )
-    # lexical_units_table.configure(yscroll=lexical_unit_table_scrollbar.set)
-    # lexical_unit_table_scrollbar.pack(side="left", fill="y")
+    lexical_unit_fast_table_scrollbar = ttk.Scrollbar(
+        lexical_units_fast_table_other_frame,
+        orient="vertical",
+        command=lexical_units_fast_table.yview
+    )
+    lexical_units_fast_table.configure(yscroll=lexical_unit_fast_table_scrollbar.set)
+    lexical_units_fast_table.bind("<Double-Button-1>", on_lexical_units_fast_table_item_selected)
 
+    isolation_degree_fast_label = ttk.Label(
+        fast_settings_frame,
+        text="Степень изолированности:",
+        font=("Segoe UI", 14, "bold"),
+        background="#000000"
+    )
+
+    isolation_degree_fast_frame = ttk.Frame(fast_settings_frame)
+
+    isolation_degree_value_fast_label = ttk.Label(isolation_degree_fast_frame, text="0", font=("Segoe UI", 12))
+
+    def isolation_degree_horizontal_fast_scale_changed(new_value):
+        float_value = float(new_value)
+        int_value = round(float_value)
+        isolation_degree_value_fast_label["text"] = int_value
+
+    isolation_degree_fast_value = IntVar(value=0)
+    isolation_degree_horizontal_fast_scale = ttk.Scale(
+        isolation_degree_fast_frame,
+        orient=HORIZONTAL,
+        length=410,
+        from_=0.0,
+        to=3.0,
+        value=0,
+        variable=isolation_degree_fast_value,
+        command=isolation_degree_horizontal_fast_scale_changed
+    )
+
+    labeled_sounds_fast_label = ttk.Label(
+        fast_settings_frame,
+        text="Маркированные звуки:",
+        font=("Segoe UI", 14, "bold"),
+        background="#000000"
+    )
+
+    labeled_sounds_fast_table_frame = ttk.Frame(fast_settings_frame)
+    labeled_sounds_fast_table_buttons_frame = ttk.Frame(labeled_sounds_fast_table_frame)
+    labeled_sounds_fast_table_other_frame = ttk.Frame(labeled_sounds_fast_table_frame)
+
+    def on_add_labeled_sound_fast_button_clicked():
+        labeled_sounds_fast_table.insert("", END, values=('-', '-'))
+
+    def on_remove_labeled_sound_fast_button_clicked():
+        for selected_item in labeled_sounds_fast_table.selection():
+            labeled_sounds_fast_table.delete(selected_item)
+
+    add_labeled_sound_fast_button = ttk.Button(
+        labeled_sounds_fast_table_buttons_frame,
+        text="+",
+        command=on_add_labeled_sound_fast_button_clicked
+    )
+
+    remove_labeled_sound_fast_button = ttk.Button(
+        labeled_sounds_fast_table_buttons_frame,
+        text="-",
+        command=on_remove_labeled_sound_fast_button_clicked
+    )
+
+    labeled_sounds_fast_table = ttk.Treeview(
+        labeled_sounds_fast_table_other_frame,
+        columns=labeled_sound_columns,
+        show="headings",
+        height=9
+    )
+    labeled_sounds_fast_table.heading("Sound1", text="Заменяемый звук")
+    labeled_sounds_fast_table.heading("Sound2", text="Заменяющий звук")
+    labeled_sound_fast_table_scrollbar = ttk.Scrollbar(
+        labeled_sounds_fast_table_other_frame,
+        orient="vertical",
+        command=labeled_sounds_fast_table.yview
+    )
+    labeled_sounds_fast_table.configure(yscroll=labeled_sound_fast_table_scrollbar.set)
+    # labeled_sounds_fast_table.bind("<Double-Button-1>", on_lexical_units_fast_table_item_selected)
+
+    spacer_label = ttk.Label(
+        text_transformation_frame
+    )
+
+    transformation_field_frame = ttk.Frame(text_transformation_frame)
+
+    transformation_text = Text(transformation_field_frame, height=20, font=("Segoe UI", 12), wrap="word")
+
+    transform_text_button = ttk.Button(
+        transformation_field_frame,
+        text="Преобразовать текст"
+    )
+
+    # Packing
     ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer before all
-    fast_settings_label.pack(expand=False, fill=X, anchor="w", ipady=5)
-    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
     selected_language_group_fast_label.pack(expand=False, anchor="w", side="left")
     selected_language_group_fast_combobox.pack(expand=False, anchor="w", side="left", ipady=1, padx=15)
     selected_language_group_fast_frame.pack(anchor="w")
+
     ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
+    word_order_fast_label.pack(expand=False, fill=X, anchor="w", ipady=5)
+
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
     word_order_fast_combobox.pack(expand=False, anchor="w", ipady=1)
+
     ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
-    lexical_units_fast_table.pack(expand=False, anchor="w")
-    fast_settings_frame.pack(anchor="n", side="left", padx=15)
+
+    lexical_units_fast_label.pack(expand=False, fill=X, anchor="w", ipady=5)
+
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
+    add_lexical_unit_fast_button.pack(fill=BOTH, expand=True, side="left")
+    ttk.Frame(lexical_units_fast_table_buttons_frame).pack(side="left", padx=2.5)  # Vertical spacer
+    remove_lexical_unit_fast_button.pack(fill=BOTH, expand=True, side="left")
+    ttk.Frame(lexical_units_fast_table_buttons_frame).pack(side="left", padx=12)  # Vertical spacer
+    lexical_units_fast_table_buttons_frame.pack(fill=X, expand=True, anchor="w")
+    ttk.Frame(lexical_units_fast_table_frame).pack(pady=2.5)  # Horizontal spacer
+    lexical_units_fast_table.pack(expand=False, side="left")
+    lexical_unit_fast_table_scrollbar.pack(side="left", fill=Y)
+    lexical_units_fast_table_other_frame.pack(anchor="w")
+    lexical_units_fast_table_frame.pack(anchor="w")
+
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
+    isolation_degree_fast_label.pack(expand=False, fill=X, anchor="w", ipady=5)
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+    isolation_degree_value_fast_label.pack(expand=False, side="top")
+    isolation_degree_horizontal_fast_scale.pack(expand=False, side="bottom")
+    isolation_degree_fast_frame.pack(anchor="w")
+
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
+    labeled_sounds_fast_label.pack(expand=False, fill=X, anchor="w", ipady=5)
+
+    ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer
+
+    add_labeled_sound_fast_button.pack(fill=BOTH, expand=True, side="left")
+    ttk.Frame(labeled_sounds_fast_table_buttons_frame).pack(side="left", padx=2.5)  # Vertical spacer
+    remove_labeled_sound_fast_button.pack(fill=BOTH, expand=True, side="left")
+    ttk.Frame(labeled_sounds_fast_table_buttons_frame).pack(side="left", padx=12)  # Vertical spacer
+    labeled_sounds_fast_table_buttons_frame.pack(fill=X, expand=True, anchor="w")
+    ttk.Frame(labeled_sounds_fast_table_frame).pack(pady=2.5)  # Horizontal spacer
+    labeled_sounds_fast_table.pack(expand=False, side="left")
+    labeled_sound_fast_table_scrollbar.pack(side="left", fill=Y)
+    labeled_sounds_fast_table_other_frame.pack(anchor="w")
+    labeled_sounds_fast_table_frame.pack(anchor="w")
+
+    ttk.Frame(text_transformation_frame).pack(side="left", padx=7.5)  # Vertical spacer
+
+    fast_settings_frame.pack(fill=BOTH, anchor="n", side="left")
+
+    # spacer_label.pack(fill=Y, side="left", ipadx=15)
+
+    transformation_text.pack(anchor="w", fill=X, padx=15, pady=15)
+
+    transform_text_button.pack(anchor="n", fill=X, padx=15)
+
+    transformation_field_frame.pack(fill=BOTH, expand=True, side="left")
+
     text_transformation_frame.pack(fill=BOTH, expand=True)
 
     """------------------------------TEXT TRANSFORMATION FRAME SECTION END------------------------------"""
@@ -598,13 +851,23 @@ def launch_tkinter_app():
                 selected_language_group = get_language_group_from_list(saved_language_groups,
                                                                        language_group_choice.get())
 
-                result = word_order.change_text_word_order(translated_text,
-                                                           word_order.WordOrder(selected_language_group["word_order"]),
-                                                           False)
-                result = lexical_units.replace_lexical_units_in_text(result, selected_language_group["lexical_units"])
-                result = isolation_degree.change_text_isolation_degree(result,
-                                                                       selected_language_group["isolation_degree"])
-                result = labeled_sounds.apply_labeled_sounds_to_text(result, selected_language_group["labeled_sounds"])
+                result = word_order.change_text_word_order(
+                    translated_text,
+                    word_order.WordOrder(selected_language_group["word_order"]),
+                    False
+                )
+                result = lexical_units.replace_lexical_units_in_text(
+                    result,
+                    selected_language_group["lexical_units"]
+                )
+                result = isolation_degree.change_text_isolation_degree(
+                    result,
+                    selected_language_group["isolation_degree"]
+                )
+                result = labeled_sounds.apply_labeled_sounds_to_text(
+                    result,
+                    selected_language_group["labeled_sounds"]
+                )
 
                 result_for_print = result.split(".")
 
@@ -628,8 +891,7 @@ def launch_tkinter_app():
 
     ttk.Frame(generation_frame).pack(pady=7.5)  # Horizontal spacer before all
     selected_language_group_frame.pack(anchor="w", padx=15)
-    ttk.Frame(generation_frame).pack(
-        pady=7.5)  # Horizontal spacer between selected_language_group and selected_character
+    ttk.Frame(generation_frame).pack(pady=7.5)  # Horizontal spacer
     selected_character_frame.pack(anchor="w", padx=15)
     chat_text.pack(anchor="w", fill=X, padx=15, pady=15)
     start_conversation_button.pack(expand=True, fill=X, side="left", anchor="n", padx=15)
