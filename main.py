@@ -470,6 +470,23 @@ def launch_tkinter_app():
 
     language_group_fast_choice = StringVar(value=language_groups_for_combobox[0])
 
+    def on_selected_language_group_fast_combobox_selected(event):
+        event.widget.selection_clear()
+
+        selected_language_group = get_language_group_from_list(
+            saved_language_groups,
+            language_group_fast_choice.get()
+        )
+
+        word_order_fast_combobox.set(word_orders[selected_language_group["word_order"]])
+        lexical_units_fast_table.delete(*lexical_units_fast_table.get_children())
+        for item in selected_language_group["lexical_units"]:
+            lexical_units_fast_table.insert("", END, values=(item, selected_language_group["lexical_units"][item]))
+        isolation_degree_horizontal_fast_scale.set(selected_language_group["isolation_degree"])
+        labeled_sounds_fast_table.delete(*labeled_sounds_fast_table.get_children())
+        for item in selected_language_group["labeled_sounds"]:
+            labeled_sounds_fast_table.insert("", END, values=(item, selected_language_group["labeled_sounds"][item]))
+
     selected_language_group_fast_combobox = ttk.Combobox(
         selected_language_group_fast_frame,
         textvariable=language_group_fast_choice,
@@ -478,7 +495,8 @@ def launch_tkinter_app():
         width=19,
     )
 
-    selected_language_group_fast_combobox.bind("<<ComboboxSelected>>", on_combobox_selected)
+    selected_language_group_fast_combobox.bind("<<ComboboxSelected>>",
+                                               on_selected_language_group_fast_combobox_selected)
 
     word_order_fast_label = ttk.Label(
         fast_settings_frame,
@@ -689,11 +707,78 @@ def launch_tkinter_app():
 
     transformation_field_frame = ttk.Frame(text_transformation_frame)
 
+    cursor_start_line = IntVar(value=0)
+    cursor_end_line = IntVar(value=0)
+
+    def on_transformation_text_pressed(in_cursor_start_line):
+        (line, char) = transformation_text.index(CURRENT).split(".")
+        float_value = float(line)
+        int_value = round(float_value)
+        in_cursor_start_line.set(int_value)
+
+    def on_transformation_text_released(in_cursor_end_line):
+        (line, char) = transformation_text.index(CURRENT).split(".")
+        float_value = float(line)
+        int_value = round(float_value)
+        in_cursor_end_line.set(int_value)
+
     transformation_text = Text(transformation_field_frame, height=20, font=("Segoe UI", 12), wrap="word")
+    transformation_text.bind("<Button-1>", lambda event: on_transformation_text_pressed(cursor_start_line))
+    transformation_text.bind("<ButtonRelease-1>", lambda event: on_transformation_text_released(cursor_end_line))
+
+    def on_transform_text_button_clicked():
+        selected_text = transformation_text.selection_get()
+
+        if not selected_text:
+            return
+
+        fast_lexical_units = {}
+        fast_labeled_sounds = {}
+
+        for child in lexical_units_fast_table.get_children(""):
+            fast_lexical_units.update({lexical_units_fast_table.set(child, 0): lexical_units_fast_table.set(child, 1)})
+
+        for child in labeled_sounds_fast_table.get_children(""):
+            fast_labeled_sounds.update(
+                {labeled_sounds_fast_table.set(child, 0): labeled_sounds_fast_table.set(child, 1)})
+
+        fast_language_group = {
+            "word_order": word_order_fast_combobox.current(),
+            "lexical_units": fast_lexical_units,
+            "isolation_degree": isolation_degree_fast_value.get(),
+            "labeled_sounds": fast_labeled_sounds
+        }
+
+        transformation_text.delete(str(cursor_start_line.get()) + ".0", str(cursor_end_line.get()) + ".end")
+
+        transformation_text.insert(END, "Исходный текст:\n" + selected_text + "\n\n")
+
+        result = word_order.change_text_word_order(
+            selected_text,
+            word_order.WordOrder(fast_language_group["word_order"]),
+            False
+        )
+        result = lexical_units.replace_lexical_units_in_text(
+            result,
+            fast_language_group["lexical_units"]
+        )
+        result = isolation_degree.change_text_isolation_degree(
+            result,
+            fast_language_group["isolation_degree"]
+        )
+        result = labeled_sounds.apply_labeled_sounds_to_text(
+            result,
+            fast_language_group["labeled_sounds"]
+        )
+
+        result_for_print = result.split(".")
+
+        transformation_text.insert(END, "Преобразованный текст:\n" + result + "\n\n")
 
     transform_text_button = ttk.Button(
         transformation_field_frame,
-        text="Преобразовать текст"
+        text="Преобразовать текст",
+        command=on_transform_text_button_clicked
     )
 
     # Packing
@@ -766,6 +851,8 @@ def launch_tkinter_app():
     transformation_field_frame.pack(fill=BOTH, expand=True, side="left")
 
     text_transformation_frame.pack(fill=BOTH, expand=True)
+
+    selected_language_group_fast_combobox.event_generate("<<ComboboxSelected>>")
 
     """------------------------------TEXT TRANSFORMATION FRAME SECTION END------------------------------"""
     # endregion
