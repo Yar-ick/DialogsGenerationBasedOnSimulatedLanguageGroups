@@ -11,12 +11,19 @@ from deep_translator import GoogleTranslator
 from tkinter import *
 from tkinter import ttk
 from tktooltip import ToolTip
+from pymorphy3 import MorphAnalyzer
 
 
 def launch_nltk_installer():
     import nltk
     nltk.download()
 
+def pymorphy_test():
+    morph = MorphAnalyzer()
+    parsed_word_variants = morph.parse("правда")
+
+    for word in parsed_word_variants:
+        print(word)
 
 def launch_tkinter_app():
     def on_notebook_tab_selected(event):
@@ -61,12 +68,10 @@ def launch_tkinter_app():
     window.geometry("%dx%d+%d+%d" % (w, h, x, y))
 
     saved_language_groups = []
-    # selected_language_group = {}
     load_saved_language_groups(saved_language_groups)
 
     language_groups_for_combobox = []
 
-    # Создание набора вкладок для разных задач
     notebook = ttk.Notebook()
     notebook.pack(expand=True, fill=BOTH)
     notebook.bind("<<NotebookTabChanged>>", on_notebook_tab_selected)
@@ -564,7 +569,7 @@ def launch_tkinter_app():
         lexical_units_fast_table_edit_row_input_frame = ttk.Frame(lexical_units_fast_table_edit_row_window)
 
         first_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
-        first_word_fast_entry.insert(0, "Заменяемое слово")
+        first_word_fast_entry.insert(0, lexical_units_fast_table.set(lexical_units_fast_table.focus(), 0))
 
         switch_on_lexical_unit_fast_label = ttk.Label(
             lexical_units_fast_table_edit_row_input_frame,
@@ -573,7 +578,7 @@ def launch_tkinter_app():
         )
 
         second_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
-        second_word_fast_entry.insert(0, "Заменяющее слово")
+        second_word_fast_entry.insert(0,  lexical_units_fast_table.set(lexical_units_fast_table.focus(), 1))
 
         lexical_units_fast_table_edit_row_buttons_frame = ttk.Frame(lexical_units_fast_table_edit_row_window)
 
@@ -685,6 +690,71 @@ def launch_tkinter_app():
         command=on_remove_labeled_sound_fast_button_clicked
     )
 
+    def on_labeled_sounds_fast_table_item_selected(event):
+        if not event.widget.focus():
+            return
+
+        w = 500
+        h = 110
+        x = (ws / 2) - (w / 2)
+        y = (hs / 2) - (h / 2)
+
+        labeled_sounds_fast_table_edit_row_window = Tk()
+        labeled_sounds_fast_table_edit_row_window.resizable(False, False)
+        sv_ttk.set_theme("dark", labeled_sounds_fast_table_edit_row_window)
+        labeled_sounds_fast_table_edit_row_window.title("Редактирование строки")
+        labeled_sounds_fast_table_edit_row_window.geometry("%dx%d+%d+%d" % (w, h, x, y))
+
+        lexical_units_fast_table_edit_row_input_frame = ttk.Frame(labeled_sounds_fast_table_edit_row_window)
+
+        first_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
+        first_word_fast_entry.insert(0, labeled_sounds_fast_table.set(labeled_sounds_fast_table.focus(), 0))
+
+        switch_on_lexical_unit_fast_label = ttk.Label(
+            lexical_units_fast_table_edit_row_input_frame,
+            text="Заменить на:",
+            font=("Segoe UI", 12)
+        )
+
+        second_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
+        second_word_fast_entry.insert(0, labeled_sounds_fast_table.set(labeled_sounds_fast_table.focus(), 1))
+
+        labeled_sounds_fast_table_edit_row_buttons_frame = ttk.Frame(labeled_sounds_fast_table_edit_row_window)
+
+        def on_confirm_labeled_sound_fast_edit_row_button_clicked():
+            selected_item = labeled_sounds_fast_table.focus()
+            labeled_sounds_fast_table.item(
+                selected_item,
+                text="",
+                values=(first_word_fast_entry.get(), second_word_fast_entry.get())
+            )
+            labeled_sounds_fast_table_edit_row_window.destroy()
+
+        def on_cancel_labeled_sound_fast_edit_row_button_clicked():
+            labeled_sounds_fast_table_edit_row_window.destroy()
+
+        confirm_labeled_sound_fast_edit_row_button = ttk.Button(
+            labeled_sounds_fast_table_edit_row_buttons_frame,
+            text="Изменить",
+            command=on_confirm_labeled_sound_fast_edit_row_button_clicked
+        )
+
+        cancel_labeled_sound_fast_edit_row_button = ttk.Button(
+            labeled_sounds_fast_table_edit_row_buttons_frame,
+            text="Отмена",
+            command=on_cancel_labeled_sound_fast_edit_row_button_clicked
+        )
+
+        first_word_fast_entry.pack(anchor="e", side="left")
+        switch_on_lexical_unit_fast_label.pack(expand=False, anchor="w", side="left", padx=15)
+        second_word_fast_entry.pack(anchor="e", side="left")
+        lexical_units_fast_table_edit_row_input_frame.pack(anchor="nw", padx=15, pady=15)
+
+        confirm_labeled_sound_fast_edit_row_button.pack(fill=X, expand=True, anchor="e", side="left")
+        ttk.Frame(labeled_sounds_fast_table_edit_row_buttons_frame).pack(side="left", padx=2.5)  # Vertical spacer
+        cancel_labeled_sound_fast_edit_row_button.pack(fill=X, expand=True, anchor="e", side="left")
+        labeled_sounds_fast_table_edit_row_buttons_frame.pack(fill=X, anchor="w", padx=15)
+
     labeled_sounds_fast_table = ttk.Treeview(
         labeled_sounds_fast_table_other_frame,
         columns=labeled_sound_columns,
@@ -699,11 +769,9 @@ def launch_tkinter_app():
         command=labeled_sounds_fast_table.yview
     )
     labeled_sounds_fast_table.configure(yscroll=labeled_sound_fast_table_scrollbar.set)
-    # labeled_sounds_fast_table.bind("<Double-Button-1>", on_lexical_units_fast_table_item_selected)
+    labeled_sounds_fast_table.bind("<Double-Button-1>", on_labeled_sounds_fast_table_item_selected)
 
-    spacer_label = ttk.Label(
-        text_transformation_frame
-    )
+    spacer_label = ttk.Label(text_transformation_frame)
 
     transformation_field_frame = ttk.Frame(text_transformation_frame)
 
@@ -722,7 +790,7 @@ def launch_tkinter_app():
         int_value = round(float_value)
         in_cursor_end_line.set(int_value)
 
-    transformation_text = Text(transformation_field_frame, height=20, font=("Segoe UI", 12), wrap="word")
+    transformation_text = Text(transformation_field_frame, height=30, font=("Segoe UI", 12), wrap="word")
     transformation_text.bind("<Button-1>", lambda event: on_transformation_text_pressed(cursor_start_line))
     transformation_text.bind("<ButtonRelease-1>", lambda event: on_transformation_text_released(cursor_end_line))
 
@@ -749,7 +817,10 @@ def launch_tkinter_app():
             "labeled_sounds": fast_labeled_sounds
         }
 
-        transformation_text.delete(str(cursor_start_line.get()) + ".0", str(cursor_end_line.get()) + ".end")
+        if cursor_start_line.get() > cursor_end_line.get():
+            transformation_text.delete(str(cursor_end_line.get()) + ".0", str(cursor_start_line.get()) + ".end")
+        else:
+            transformation_text.delete(str(cursor_start_line.get()) + ".0", str(cursor_end_line.get()) + ".end")
 
         transformation_text.insert(END, "Исходный текст:\n" + selected_text + "\n\n")
 
@@ -846,7 +917,7 @@ def launch_tkinter_app():
 
     transformation_text.pack(anchor="w", fill=X, padx=15, pady=15)
 
-    transform_text_button.pack(anchor="n", fill=X, padx=15)
+    transform_text_button.pack(anchor="n", fill=X, padx=15, pady=6)
 
     transformation_field_frame.pack(fill=BOTH, expand=True, side="left")
 
@@ -1003,3 +1074,5 @@ def launch_tkinter_app():
 
 if __name__ == '__main__':
     launch_tkinter_app()
+    # pymorphy_test()
+
