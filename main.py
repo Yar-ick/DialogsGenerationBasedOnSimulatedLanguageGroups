@@ -18,12 +18,14 @@ def launch_nltk_installer():
     import nltk
     nltk.download()
 
+
 def pymorphy_test():
     morph = MorphAnalyzer()
     parsed_word_variants = morph.parse("правда")
 
     for word in parsed_word_variants:
         print(word)
+
 
 def launch_tkinter_app():
     def on_notebook_tab_selected(event):
@@ -454,6 +456,9 @@ def launch_tkinter_app():
 
     text_transformation_frame = ttk.Frame(notebook)
 
+    # region FastSettings
+    """------------------------------FAST SETTINGS SECTION------------------------------"""
+
     fast_settings_frame = ttk.Frame(text_transformation_frame)
 
     fast_settings_label = ttk.Label(
@@ -578,7 +583,7 @@ def launch_tkinter_app():
         )
 
         second_word_fast_entry = ttk.Entry(lexical_units_fast_table_edit_row_input_frame)
-        second_word_fast_entry.insert(0,  lexical_units_fast_table.set(lexical_units_fast_table.focus(), 1))
+        second_word_fast_entry.insert(0, lexical_units_fast_table.set(lexical_units_fast_table.focus(), 1))
 
         lexical_units_fast_table_edit_row_buttons_frame = ttk.Frame(lexical_units_fast_table_edit_row_window)
 
@@ -647,6 +652,7 @@ def launch_tkinter_app():
         float_value = float(new_value)
         int_value = round(float_value)
         isolation_degree_value_fast_label["text"] = int_value
+        isolation_degree_fast_value.set(int_value)
 
     isolation_degree_fast_value = IntVar(value=0)
     isolation_degree_horizontal_fast_scale = ttk.Scale(
@@ -771,6 +777,12 @@ def launch_tkinter_app():
     labeled_sounds_fast_table.configure(yscroll=labeled_sound_fast_table_scrollbar.set)
     labeled_sounds_fast_table.bind("<Double-Button-1>", on_labeled_sounds_fast_table_item_selected)
 
+    """------------------------------FAST SETTINGS SECTION END------------------------------"""
+    # endregion
+
+    # region TextTransformation
+    """------------------------------TEXT TRANSFORMATION SECTION------------------------------"""
+
     spacer_label = ttk.Label(text_transformation_frame)
 
     transformation_field_frame = ttk.Frame(text_transformation_frame)
@@ -793,6 +805,13 @@ def launch_tkinter_app():
     transformation_text = Text(transformation_field_frame, height=30, font=("Segoe UI", 12), wrap="word")
     transformation_text.bind("<Button-1>", lambda event: on_transformation_text_pressed(cursor_start_line))
     transformation_text.bind("<ButtonRelease-1>", lambda event: on_transformation_text_released(cursor_end_line))
+    transformation_text.tag_configure("just_bold_segoe", font=("Segoe UI", 12, "bold"))
+    transformation_text.tag_configure("isolated_word", foreground="red")
+
+    text_image = PhotoImage(file="./icons/Text.png")
+    text_image = text_image.subsample(15, 15)
+    gear_image = PhotoImage(file="./icons/Gear.png")
+    gear_image = gear_image.subsample(12, 12)
 
     def on_transform_text_button_clicked():
         selected_text = transformation_text.selection_get()
@@ -822,29 +841,66 @@ def launch_tkinter_app():
         else:
             transformation_text.delete(str(cursor_start_line.get()) + ".0", str(cursor_end_line.get()) + ".end")
 
-        transformation_text.insert(END, "Исходный текст:\n" + selected_text + "\n\n")
+        transformation_text.image_create(END, image=text_image)
+        transformation_text.insert(END, " Исходный текст:\n", "just_bold_segoe")
+        transformation_text.insert(END, selected_text + "\n\n")
 
-        result = word_order.change_text_word_order(
-            selected_text,
-            word_order.WordOrder(fast_language_group["word_order"]),
-            False
-        )
-        result = lexical_units.replace_lexical_units_in_text(
-            result,
-            fast_language_group["lexical_units"]
-        )
-        result = isolation_degree.change_text_isolation_degree(
-            result,
-            fast_language_group["isolation_degree"]
-        )
-        result = labeled_sounds.apply_labeled_sounds_to_text(
-            result,
-            fast_language_group["labeled_sounds"]
-        )
+        paragraphs = [p for p in selected_text.split('\n') if p]
 
-        result_for_print = result.split(".")
+        word_order_result = ""
 
-        transformation_text.insert(END, "Преобразованный текст:\n" + result + "\n\n")
+        for paragraph in paragraphs:
+            word_order_temp_result = word_order.change_text_word_order(
+                paragraph,
+                word_order.WordOrder(fast_language_group["word_order"]),
+                False
+            )
+            word_order_temp_result = " ".join(word_order_temp_result)
+            word_order_result += word_order_temp_result + "\n\n"
+
+        # paragraphs = [p for p in word_order_result.split('\n') if p]
+
+        # lexical_units_result = ""
+        #
+        # for paragraph in paragraphs:
+        #     lexical_units_result = lexical_units.replace_lexical_units_in_text(
+        #         paragraph,
+        #         fast_language_group["lexical_units"],
+        #         False
+        #     )
+
+        paragraphs = [p for p in word_order_result.split('\n') if p]
+
+        isolation_degree_result = []
+
+        transformation_text.image_create(END, image=gear_image)
+        transformation_text.insert(END, " Преобразованный текст:\n", "just_bold_segoe")
+
+        for paragraph in paragraphs:
+            isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
+                paragraph,
+                fast_language_group["isolation_degree"]
+            )
+
+            # If there is no changed tokens with isolation degree
+            if not isolation_degree_result[1]:
+                isolation_degree_text = " ".join(isolation_degree_result[0])
+                transformation_text.insert(END, isolation_degree_text + "\n\n")
+            else:
+                for i in range(0, len(isolation_degree_result[0])):
+                    if i in isolation_degree_result[1]:
+                        transformation_text.insert(END, isolation_degree_result[0][i] + ' ', "isolated_word")
+                    else:
+                        transformation_text.insert(END, isolation_degree_result[0][i] + ' ')
+
+                transformation_text.insert(END, "\n\n")
+
+        # result = labeled_sounds.apply_labeled_sounds_to_text(
+        #     result,
+        #     fast_language_group["labeled_sounds"]
+        # )
+
+        # result_for_print = result.split(".")
 
     transform_text_button = ttk.Button(
         transformation_field_frame,
@@ -852,7 +908,13 @@ def launch_tkinter_app():
         command=on_transform_text_button_clicked
     )
 
-    # Packing
+    """------------------------------TEXT TRANSFORMATION SECTION END------------------------------"""
+    # endregion
+
+    # For start autofill
+    selected_language_group_fast_combobox.event_generate("<<ComboboxSelected>>")
+
+    # region Packing
     ttk.Frame(fast_settings_frame).pack(pady=7.5)  # Horizontal spacer before all
 
     selected_language_group_fast_label.pack(expand=False, anchor="w", side="left")
@@ -923,7 +985,7 @@ def launch_tkinter_app():
 
     text_transformation_frame.pack(fill=BOTH, expand=True)
 
-    selected_language_group_fast_combobox.event_generate("<<ComboboxSelected>>")
+    # endregion
 
     """------------------------------TEXT TRANSFORMATION FRAME SECTION END------------------------------"""
     # endregion
@@ -1075,4 +1137,3 @@ def launch_tkinter_app():
 if __name__ == '__main__':
     launch_tkinter_app()
     # pymorphy_test()
-

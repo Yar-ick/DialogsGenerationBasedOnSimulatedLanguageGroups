@@ -36,9 +36,9 @@ def is_token_from_subject_phrase(token):
     return False
 
 
-def change_text_word_order(text, word_order, print_help_info=False):
+def change_text_word_order(text, word_order, print_debug_info=False):
     if word_order == WordOrder.SubjectVerbObject:
-        return text
+        return nltk.word_tokenize(text)
 
     nlp = spacy.load("ru_core_news_lg")
     out_text = ""
@@ -71,7 +71,7 @@ def change_text_word_order(text, word_order, print_help_info=False):
                 elif token.dep_ != "punct" and token.pos_ != "SPACE":
                     object_phrase.append(token.text)
 
-            if print_help_info:
+            if print_debug_info:
                 print("Subject phrase: ", subject_phrase)
                 print("Verb phrase: ", verb_phrase)
                 print("Object phrase: ", object_phrase)
@@ -106,7 +106,7 @@ def change_text_word_order(text, word_order, print_help_info=False):
             else:
                 out_sentence.append(sentence[len(sentence) - 1])
 
-            if print_help_info:
+            if print_debug_info:
                 print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
                 print("==========================================================================================")
                 for token in analyzed_part:
@@ -118,4 +118,4 @@ def change_text_word_order(text, word_order, print_help_info=False):
 
         out_text += " ".join(out_sentence)
 
-    return out_text
+    return nltk.word_tokenize(out_text)
