@@ -1,3 +1,5 @@
+import string
+
 import word_order
 import lexical_units
 import isolation_degree
@@ -5,12 +7,14 @@ import labeled_sounds
 import sv_ttk
 import json
 import os.path
+import nltk
+import difflib
 
 from characterai import PyCAI
 from deep_translator import GoogleTranslator
 from tkinter import *
 from tkinter import ttk
-from tktooltip import ToolTip
+# from tktooltip import ToolTip
 from pymorphy3 import MorphAnalyzer
 
 
@@ -25,6 +29,12 @@ def pymorphy_test():
 
     for word in parsed_word_variants:
         print(word)
+
+
+def ndiff_test():
+    # diff = difflib.ndiff("что", "шо")
+    # print('\n'.join(diff))
+    print('\n'.join(difflib.Differ().compare("сущего", "сусчеггггго")))
 
 
 def launch_tkinter_app():
@@ -783,30 +793,37 @@ def launch_tkinter_app():
     # region TextTransformation
     """------------------------------TEXT TRANSFORMATION SECTION------------------------------"""
 
-    spacer_label = ttk.Label(text_transformation_frame)
-
     transformation_field_frame = ttk.Frame(text_transformation_frame)
 
-    cursor_start_line = IntVar(value=0)
-    cursor_end_line = IntVar(value=0)
+    transformed_text_widget_frame = ttk.Frame(transformation_field_frame)
 
-    def on_transformation_text_pressed(in_cursor_start_line):
-        (line, char) = transformation_text.index(CURRENT).split(".")
-        float_value = float(line)
-        int_value = round(float_value)
-        in_cursor_start_line.set(int_value)
+    transformed_text_widget = Text(transformed_text_widget_frame, undo=True, height=30, font=("Segoe UI", 12), wrap="word")
+    transformed_text_widget_scrollbar = ttk.Scrollbar(
+        transformed_text_widget_frame,
+        orient="vertical",
+        command=transformed_text_widget.yview
+    )
+    transformed_text_widget["yscrollcommand"] = transformed_text_widget_scrollbar.set
 
-    def on_transformation_text_released(in_cursor_end_line):
-        (line, char) = transformation_text.index(CURRENT).split(".")
-        float_value = float(line)
-        int_value = round(float_value)
-        in_cursor_end_line.set(int_value)
+    transformed_text_widget.tag_configure("just_bold_segoe", font=("Segoe UI", 12, "bold"))
+    transformed_text_widget.tag_configure("isolated_word", foreground="red", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure("labeled_sound", background="#33808F", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure(
+        "labeled_sound_in_isolated_word",
+        foreground="red",
+        background="#33808F",
+        font=("Segoe UI", 12)
+    )
 
-    transformation_text = Text(transformation_field_frame, height=30, font=("Segoe UI", 12), wrap="word")
-    transformation_text.bind("<Button-1>", lambda event: on_transformation_text_pressed(cursor_start_line))
-    transformation_text.bind("<ButtonRelease-1>", lambda event: on_transformation_text_released(cursor_end_line))
-    transformation_text.tag_configure("just_bold_segoe", font=("Segoe UI", 12, "bold"))
-    transformation_text.tag_configure("isolated_word", foreground="red")
+    input_text_widget_frame = ttk.Frame(transformation_field_frame)
+
+    input_text_widget = Text(input_text_widget_frame, height=10, font=("Segoe UI", 12), wrap="word")
+    input_text_widget_scrollbar = ttk.Scrollbar(
+        input_text_widget_frame,
+        orient="vertical",
+        command=input_text_widget.yview
+    )
+    input_text_widget["yscrollcommand"] = input_text_widget_scrollbar.set
 
     text_image = PhotoImage(file="./icons/Text.png")
     text_image = text_image.subsample(15, 15)
@@ -814,9 +831,9 @@ def launch_tkinter_app():
     gear_image = gear_image.subsample(12, 12)
 
     def on_transform_text_button_clicked():
-        selected_text = transformation_text.selection_get()
+        input_text = input_text_widget.get("1.0", END)
 
-        if not selected_text:
+        if not input_text:
             return
 
         fast_lexical_units = {}
@@ -836,71 +853,92 @@ def launch_tkinter_app():
             "labeled_sounds": fast_labeled_sounds
         }
 
-        if cursor_start_line.get() > cursor_end_line.get():
-            transformation_text.delete(str(cursor_end_line.get()) + ".0", str(cursor_start_line.get()) + ".end")
-        else:
-            transformation_text.delete(str(cursor_start_line.get()) + ".0", str(cursor_end_line.get()) + ".end")
+        input_text_widget.delete("1.0", END)
 
-        transformation_text.image_create(END, image=text_image)
-        transformation_text.insert(END, " Исходный текст:\n", "just_bold_segoe")
-        transformation_text.insert(END, selected_text + "\n\n")
+        transformed_text_widget.image_create(END, image=text_image)
+        transformed_text_widget.insert(END, " Исходный текст:\n", "just_bold_segoe")
+        transformed_text_widget.insert(END, input_text + "\n\n")
 
-        paragraphs = [p for p in selected_text.split('\n') if p]
+        transformed_text_widget.image_create(END, image=gear_image)
+        transformed_text_widget.insert(END, " Преобразованный текст:\n", "just_bold_segoe")
 
-        word_order_result = ""
-
-        for paragraph in paragraphs:
-            word_order_temp_result = word_order.change_text_word_order(
-                paragraph,
-                word_order.WordOrder(fast_language_group["word_order"]),
-                False
-            )
-            word_order_temp_result = " ".join(word_order_temp_result)
-            word_order_result += word_order_temp_result + "\n\n"
-
-        # paragraphs = [p for p in word_order_result.split('\n') if p]
-
-        # lexical_units_result = ""
-        #
-        # for paragraph in paragraphs:
-        #     lexical_units_result = lexical_units.replace_lexical_units_in_text(
-        #         paragraph,
-        #         fast_language_group["lexical_units"],
-        #         False
-        #     )
-
-        paragraphs = [p for p in word_order_result.split('\n') if p]
-
-        isolation_degree_result = []
-
-        transformation_text.image_create(END, image=gear_image)
-        transformation_text.insert(END, " Преобразованный текст:\n", "just_bold_segoe")
+        # Input string split like this because nltk.tokenize does not take into account \n symbol
+        paragraphs = [p for p in input_text.split('\n') if p]
 
         for paragraph in paragraphs:
-            isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
-                paragraph,
-                fast_language_group["isolation_degree"]
-            )
+            sentence_tokens = nltk.sent_tokenize(paragraph)
 
-            # If there is no changed tokens with isolation degree
-            if not isolation_degree_result[1]:
-                isolation_degree_text = " ".join(isolation_degree_result[0])
-                transformation_text.insert(END, isolation_degree_text + "\n\n")
-            else:
-                for i in range(0, len(isolation_degree_result[0])):
+            for sentence_token in sentence_tokens:
+                word_tokens = nltk.word_tokenize(sentence_token)
+
+                word_order_temp_result = word_order.change_text_word_order(
+                    word_tokens,
+                    word_order.WordOrder(fast_language_group["word_order"]),
+                    False
+                )
+
+                lexical_units_result = lexical_units.replace_lexical_units_in_text(
+                    word_order_temp_result,
+                    fast_language_group["lexical_units"],
+                    False
+                )
+
+                isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
+                    lexical_units_result,
+                    fast_language_group["isolation_degree"]
+                )
+
+                labeled_sounds_result = labeled_sounds.apply_labeled_sounds_to_text(
+                    isolation_degree_result[0],
+                    fast_language_group["labeled_sounds"]
+                )
+
+                final_result = labeled_sounds_result[0]
+
+                first_word = final_result[0]
+                first_symbol_upper = first_word[0].upper()
+                first_word_list = list(first_word)
+                first_word_list[0] = first_symbol_upper
+                first_word = ''.join(first_word_list)
+                final_result[0] = first_word
+                # final_result = [token for token in final_result if token != ' ']
+
+                print("Final Result: ", final_result)
+
+                for i in range(len(final_result)):
+                    if final_result[i] == ' ':
+                        continue
+
                     if i in isolation_degree_result[1]:
-                        transformation_text.insert(END, isolation_degree_result[0][i] + ' ', "isolated_word")
+                        if i in labeled_sounds_result[1].keys():
+                            for j in range(len(final_result[i])):
+                                if j in labeled_sounds_result[1][i]:
+                                    transformed_text_widget.insert(
+                                        END,
+                                        final_result[i][j],
+                                        "labeled_sound_in_isolated_word"
+                                    )
+                                else:
+                                    transformed_text_widget.insert(END, final_result[i][j], "isolated_word")
+
+                            transformed_text_widget.insert(END, ' ' if i + 1 <= len(final_result) - 1 and final_result[i + 1] not in string.punctuation else '')
+                        else:
+                            transformed_text_widget.insert(END, final_result[i] + (' ' if i + 1 <= len(final_result) - 1 and final_result[i + 1] not in string.punctuation else ''), "isolated_word")
                     else:
-                        transformation_text.insert(END, isolation_degree_result[0][i] + ' ')
+                        if i in labeled_sounds_result[1].keys():
+                            for j in range(len(final_result[i])):
+                                if j in labeled_sounds_result[1][i]:
+                                    transformed_text_widget.insert(END, final_result[i][j], "labeled_sound")
+                                else:
+                                    transformed_text_widget.insert(END, final_result[i][j])
 
-                transformation_text.insert(END, "\n\n")
+                            transformed_text_widget.insert(END, ' ' if i + 1 <= len(final_result) - 1 and final_result[i + 1] not in string.punctuation else '')
+                        else:
+                            transformed_text_widget.insert(END, final_result[i] + (' ' if i + 1 <= len(final_result) - 1 and final_result[i + 1] not in string.punctuation else ''))
 
-        # result = labeled_sounds.apply_labeled_sounds_to_text(
-        #     result,
-        #     fast_language_group["labeled_sounds"]
-        # )
+                transformed_text_widget.insert(END, ' ')
 
-        # result_for_print = result.split(".")
+            transformed_text_widget.insert(END, "\n\n")
 
     transform_text_button = ttk.Button(
         transformation_field_frame,
@@ -975,11 +1013,19 @@ def launch_tkinter_app():
 
     fast_settings_frame.pack(fill=BOTH, anchor="n", side="left")
 
-    # spacer_label.pack(fill=Y, side="left", ipadx=15)
+    ttk.Frame(transformation_field_frame).pack(pady=7.5)  # Horizontal spacer
 
-    transformation_text.pack(anchor="w", fill=X, padx=15, pady=15)
+    transformed_text_widget.pack(fill=X, expand=True, side="left")
+    transformed_text_widget_scrollbar.pack(side="left", fill=Y)
+    transformed_text_widget_frame.pack(fill=X, expand=False, padx=15)
 
-    transform_text_button.pack(anchor="n", fill=X, padx=15, pady=6)
+    ttk.Frame(transformation_field_frame).pack(pady=7.5)  # Horizontal spacer
+
+    input_text_widget.pack(expand=True, side="left", fill=X)
+    input_text_widget_scrollbar.pack(side="left", fill=Y)
+    input_text_widget_frame.pack(fill=X, padx=15)
+
+    transform_text_button.pack(anchor="n", fill=X, padx=15, pady=15)
 
     transformation_field_frame.pack(fill=BOTH, expand=True, side="left")
 
@@ -1137,3 +1183,4 @@ def launch_tkinter_app():
 if __name__ == '__main__':
     launch_tkinter_app()
     # pymorphy_test()
+    # ndiff_test()

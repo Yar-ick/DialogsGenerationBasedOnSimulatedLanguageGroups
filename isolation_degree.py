@@ -32,12 +32,13 @@ def change_text_isolation_degree(text, isolation_degree):
 
 
 def change_text_isolation_degree_list(text, isolation_degree):
-    morph = MorphAnalyzer()
     changed_tokens = set()
-    word_tokens = word_tokenize(text)
 
     if isolation_degree == 0:
-        return [word_tokens, changed_tokens]
+        return [text, changed_tokens]
+
+    morph = MorphAnalyzer()
+    word_tokens = text.copy()
 
     index = 0
 
@@ -61,8 +62,5 @@ def change_text_isolation_degree_list(text, isolation_degree):
             word_tokens[index] = parsed_word[0].normal_form
 
         index += 1
-
-    out_text = ""
-    out_text += " ".join(word_tokens)
 
     return [word_tokens, changed_tokens]

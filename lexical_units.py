@@ -4,14 +4,25 @@ from pymystem3 import Mystem
 
 
 def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
+    """
+    Return a list of word tokens with changed lexical units
+
+    :param text: list of work tokens
+    :type text: list
+    :param lexical_units: dictionary with lexical units
+    :type lexical_units: dict
+    :param print_debug_info: for printing debug info
+    :type print_debug_info: bool
+    """
+    if not lexical_units:
+        return text
+
     mystem = Mystem()
     morph = MorphAnalyzer()
-    tokenized_text = word_tokenize(text)
+    tokenized_text = text.copy()
 
-    if print_debug_info:
-        print("Tokenized text: ", tokenized_text)
-
-    lemmatized_text_original = mystem.lemmatize(text)
+    word_tokens_for_lemmatize = " ".join(text)
+    lemmatized_text_original = mystem.lemmatize(word_tokens_for_lemmatize)
     lemmatized_text_original_no_spaces = [token for token in lemmatized_text_original if token != ' ']
     lemmatized_text = lemmatized_text_original_no_spaces.copy()
 
@@ -61,6 +72,4 @@ def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
                     tokenized_text[index] = parsed_word_replacing_newform.word
         index = index + 1
 
-    out_text = " ".join(tokenized_text)
-
-    return out_text
+    return tokenized_text
