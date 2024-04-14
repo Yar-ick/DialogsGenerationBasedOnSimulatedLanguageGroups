@@ -1,3 +1,5 @@
+import string
+
 import nltk
 import spacy
 
@@ -47,12 +49,17 @@ def change_text_word_order(text, word_order, print_debug_info=False):
     :param print_debug_info: for printing debug info
     :type print_debug_info: bool
     """
+    svo_phrases = {}
+
     if word_order == WordOrder.SubjectVerbObject:
-        return text
+        return [text, svo_phrases]
 
     nlp = spacy.load("ru_core_news_lg")
 
     out_sentence = []
+    subject_phrase_borders = []
+    verb_phrase_borders = []
+    object_phrase_borders = []
 
     sentence_parts = " ".join(text).split(',')
 
@@ -83,43 +90,116 @@ def change_text_word_order(text, word_order, print_debug_info=False):
             print("Object phrase: ", object_phrase)
 
         if word_order == word_order.SubjectVerbObject:
-            out_sentence += subject_phrase
-            out_sentence += verb_phrase
-            out_sentence += object_phrase
+            if subject_phrase:
+                subject_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
+                out_sentence += subject_phrase
+                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if verb_phrase:
+                verb_phrase_borders.append((len(out_sentence) - 1, '{'))
+                out_sentence += verb_phrase
+                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if object_phrase:
+                object_phrase_borders.append((len(out_sentence) - 1, '{'))
+                out_sentence += object_phrase
+                object_phrase_borders.append((len(out_sentence) - 1, '}'))
         elif word_order == word_order.SubjectObjectVerb:
-            out_sentence += subject_phrase
-            out_sentence += object_phrase
-            out_sentence += verb_phrase
+            if subject_phrase:
+                subject_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
+                out_sentence += subject_phrase
+                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if object_phrase:
+                object_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += object_phrase
+                object_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if verb_phrase:
+                verb_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += verb_phrase
+                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
         elif word_order == word_order.VerbSubjectObject:
-            out_sentence += verb_phrase
-            out_sentence += subject_phrase
-            out_sentence += object_phrase
+            if verb_phrase:
+                verb_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
+                out_sentence += verb_phrase
+                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if subject_phrase:
+                subject_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += subject_phrase
+                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if object_phrase:
+                object_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += object_phrase
+                object_phrase_borders.append((len(out_sentence) - 1, '}'))
         elif word_order == word_order.VerbObjectSubject:
-            out_sentence += verb_phrase
-            out_sentence += object_phrase
-            out_sentence += subject_phrase
+            if verb_phrase:
+                verb_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
+                out_sentence += verb_phrase
+                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if object_phrase:
+                object_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += object_phrase
+                object_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if subject_phrase:
+                subject_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += subject_phrase
+                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
         elif word_order == word_order.ObjectVerbSubject:
-            out_sentence += object_phrase
-            out_sentence += verb_phrase
-            out_sentence += subject_phrase
+            if object_phrase:
+                object_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
+                out_sentence += object_phrase
+                object_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if verb_phrase:
+                verb_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += verb_phrase
+                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if subject_phrase:
+                subject_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += subject_phrase
+                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
         elif word_order == word_order.ObjectSubjectVerb:
-            out_sentence += object_phrase
-            out_sentence += subject_phrase
-            out_sentence += verb_phrase
+            if object_phrase:
+                object_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
+                out_sentence += object_phrase
+                object_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if subject_phrase:
+                subject_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += subject_phrase
+                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
+
+            if verb_phrase:
+                verb_phrase_borders.append((len(out_sentence), '{'))
+                out_sentence += verb_phrase
+                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
 
         if part != sentence_parts[len(sentence_parts) - 1]:
             out_sentence += ','
         else:
             out_sentence += part[len(part) - 1]
 
-        if print_debug_info:
-            print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
-            print("==========================================================================================")
-            for token in analyzed_part:
-                print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
-                    spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
-                                                        token.head.text))
-            print('\n')
+        # if print_debug_info:
+        #     print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
+        #     print("==========================================================================================")
+        #     for token in analyzed_part:
+        #         print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
+        #             spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
+        #                                                 token.head.text))
+        #     print('\n')
             # displacy.render(analyzed_part, style='dep', jupyter=True)
 
-    return out_sentence
+    svo_phrases.update({"S": subject_phrase_borders})
+    svo_phrases.update({"V": verb_phrase_borders})
+    svo_phrases.update({"O": object_phrase_borders})
+
+    if print_debug_info:
+        print("SVO Phrases: ", svo_phrases)
+
+    return [out_sentence, svo_phrases]

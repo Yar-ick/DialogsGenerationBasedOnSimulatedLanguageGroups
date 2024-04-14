@@ -5,7 +5,11 @@ from pymystem3 import Mystem
 
 def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
     """
-    Return a list of word tokens with changed lexical units
+    Return a list of 2 lists:
+
+    List[0] is a list of word tokens with replaced lexical units;
+
+    List[1] is a list with indexes of replaced tokens
 
     :param text: list of work tokens
     :type text: list
@@ -14,8 +18,10 @@ def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
     :param print_debug_info: for printing debug info
     :type print_debug_info: bool
     """
+    changed_tokens = set()
+
     if not lexical_units:
-        return text
+        return [text, changed_tokens]
 
     mystem = Mystem()
     morph = MorphAnalyzer()
@@ -70,6 +76,7 @@ def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
 
                 if parsed_word_replacing_newform is not None:
                     tokenized_text[index] = parsed_word_replacing_newform.word
+                    changed_tokens.add(index)
         index = index + 1
 
-    return tokenized_text
+    return [tokenized_text, changed_tokens]
