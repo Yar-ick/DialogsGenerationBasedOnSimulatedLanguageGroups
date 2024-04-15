@@ -38,6 +38,82 @@ def is_token_from_subject_phrase(token):
     return False
 
 
+def add_phrases_to_sentence(dict_with_parameters):
+    word_order_to_phrases = {
+        WordOrder.SubjectVerbObject: [
+            [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+        ],
+        WordOrder.SubjectObjectVerb: [
+            [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]]
+        ],
+        WordOrder.VerbSubjectObject: [
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]]
+        ],
+        WordOrder.VerbObjectSubject: [
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]]
+        ],
+        WordOrder.ObjectVerbSubject: [
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]]
+        ],
+        WordOrder.ObjectSubjectVerb: [
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]]
+        ]
+    }
+
+    in_sentence = dict_with_parameters["Sentence"]
+    first_phrase = word_order_to_phrases[dict_with_parameters["WordOrder"]][0][0]
+    second_phrase = word_order_to_phrases[dict_with_parameters["WordOrder"]][1][0]
+    third_phrase = word_order_to_phrases[dict_with_parameters["WordOrder"]][2][0]
+    first_phrase_indexes = word_order_to_phrases[dict_with_parameters["WordOrder"]][0][1]
+    second_phrase_indexes = word_order_to_phrases[dict_with_parameters["WordOrder"]][1][1]
+    third_phrase_indexes = word_order_to_phrases[dict_with_parameters["WordOrder"]][2][1]
+
+    if first_phrase:
+        sentence_len_before_append = len(in_sentence) - 1 if len(in_sentence) != 0 else 0
+        in_sentence += first_phrase
+        first_phrase_indexes += [index for index in range(sentence_len_before_append, len(in_sentence))]
+
+    if second_phrase:
+        sentence_len_before_append = len(in_sentence)
+        in_sentence += second_phrase
+        second_phrase_indexes += [index for index in range(sentence_len_before_append, len(in_sentence))]
+
+    if third_phrase:
+        sentence_len_before_append = len(in_sentence)
+        in_sentence += third_phrase
+        third_phrase_indexes += [index for index in range(sentence_len_before_append, len(in_sentence))]
+
+    word_order_to_phrase_indexes = {
+        WordOrder.SubjectVerbObject: [first_phrase_indexes, second_phrase_indexes, third_phrase_indexes],
+        WordOrder.SubjectObjectVerb: [first_phrase_indexes, third_phrase_indexes, second_phrase_indexes],
+        WordOrder.VerbSubjectObject: [second_phrase_indexes, first_phrase_indexes, third_phrase_indexes],
+        WordOrder.VerbObjectSubject: [third_phrase_indexes, first_phrase_indexes, second_phrase_indexes],
+        WordOrder.ObjectVerbSubject: [third_phrase_indexes, second_phrase_indexes, first_phrase_indexes],
+        WordOrder.ObjectSubjectVerb: [second_phrase_indexes, third_phrase_indexes, first_phrase_indexes]
+    }
+
+    out_phrase_indexes = word_order_to_phrase_indexes[dict_with_parameters["WordOrder"]]
+
+    print("Sentence with added phrases: ", in_sentence)
+    print("Subject phrase indexes: ", out_phrase_indexes[0])
+    print("Verb phrase indexes: ", out_phrase_indexes[1])
+    print("Object phrase indexes: ", out_phrase_indexes[2])
+
+    return [in_sentence, out_phrase_indexes[0], out_phrase_indexes[1], out_phrase_indexes[2]]
+
+
 def change_text_word_order(text, word_order, print_debug_info=False):
     """
     Return a list of word tokens with changed word order
@@ -57,9 +133,9 @@ def change_text_word_order(text, word_order, print_debug_info=False):
     nlp = spacy.load("ru_core_news_lg")
 
     out_sentence = []
-    subject_phrase_borders = []
-    verb_phrase_borders = []
-    object_phrase_borders = []
+    subject_phrase_indexes = []
+    verb_phrase_indexes = []
+    object_phrase_indexes = []
 
     sentence_parts = " ".join(text).split(',')
 
@@ -89,96 +165,21 @@ def change_text_word_order(text, word_order, print_debug_info=False):
             print("Verb phrase: ", verb_phrase)
             print("Object phrase: ", object_phrase)
 
-        if word_order == word_order.SubjectVerbObject:
-            if subject_phrase:
-                subject_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
-                out_sentence += subject_phrase
-                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
+        result_list = add_phrases_to_sentence({
+            "WordOrder": word_order,
+            "SubjectPhrase": subject_phrase,
+            "VerbPhrase": verb_phrase,
+            "ObjectPhrase": object_phrase,
+            "SubjectPhraseIndexes": subject_phrase_indexes,
+            "VerbPhraseIndexes": verb_phrase_indexes,
+            "ObjectPhraseIndexes": object_phrase_indexes,
+            "Sentence": out_sentence
+        })
 
-            if verb_phrase:
-                verb_phrase_borders.append((len(out_sentence) - 1, '{'))
-                out_sentence += verb_phrase
-                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if object_phrase:
-                object_phrase_borders.append((len(out_sentence) - 1, '{'))
-                out_sentence += object_phrase
-                object_phrase_borders.append((len(out_sentence) - 1, '}'))
-        elif word_order == word_order.SubjectObjectVerb:
-            if subject_phrase:
-                subject_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
-                out_sentence += subject_phrase
-                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if object_phrase:
-                object_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += object_phrase
-                object_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if verb_phrase:
-                verb_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += verb_phrase
-                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
-        elif word_order == word_order.VerbSubjectObject:
-            if verb_phrase:
-                verb_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
-                out_sentence += verb_phrase
-                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if subject_phrase:
-                subject_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += subject_phrase
-                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if object_phrase:
-                object_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += object_phrase
-                object_phrase_borders.append((len(out_sentence) - 1, '}'))
-        elif word_order == word_order.VerbObjectSubject:
-            if verb_phrase:
-                verb_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
-                out_sentence += verb_phrase
-                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if object_phrase:
-                object_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += object_phrase
-                object_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if subject_phrase:
-                subject_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += subject_phrase
-                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
-        elif word_order == word_order.ObjectVerbSubject:
-            if object_phrase:
-                object_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
-                out_sentence += object_phrase
-                object_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if verb_phrase:
-                verb_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += verb_phrase
-                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if subject_phrase:
-                subject_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += subject_phrase
-                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
-        elif word_order == word_order.ObjectSubjectVerb:
-            if object_phrase:
-                object_phrase_borders.append((len(out_sentence) - 1 if len(out_sentence) != 0 else 0, '{'))
-                out_sentence += object_phrase
-                object_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if subject_phrase:
-                subject_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += subject_phrase
-                subject_phrase_borders.append((len(out_sentence) - 1, '}'))
-
-            if verb_phrase:
-                verb_phrase_borders.append((len(out_sentence), '{'))
-                out_sentence += verb_phrase
-                verb_phrase_borders.append((len(out_sentence) - 1, '}'))
+        out_sentence = result_list[0]
+        subject_phrase_indexes = result_list[1]
+        verb_phrase_indexes = result_list[2]
+        object_phrase_indexes = result_list[3]
 
         if part != sentence_parts[len(sentence_parts) - 1]:
             out_sentence += ','
@@ -193,11 +194,11 @@ def change_text_word_order(text, word_order, print_debug_info=False):
         #             spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
         #                                                 token.head.text))
         #     print('\n')
-            # displacy.render(analyzed_part, style='dep', jupyter=True)
+        # displacy.render(analyzed_part, style='dep', jupyter=True)
 
-    svo_phrases.update({"S": subject_phrase_borders})
-    svo_phrases.update({"V": verb_phrase_borders})
-    svo_phrases.update({"O": object_phrase_borders})
+    svo_phrases.update({"S": subject_phrase_indexes})
+    svo_phrases.update({"V": verb_phrase_indexes})
+    svo_phrases.update({"O": object_phrase_indexes})
 
     if print_debug_info:
         print("SVO Phrases: ", svo_phrases)

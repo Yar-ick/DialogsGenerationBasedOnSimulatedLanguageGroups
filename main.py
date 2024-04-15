@@ -65,17 +65,15 @@ def launch_tkinter_app():
             if language_group["language_group_name"] == in_language_group_name:
                 return language_group
 
-    def has_index_in_tuple(in_index, in_list_of_dicts):
-        result_list = []
+    def has_index_in_dict(in_index, in_dict):
+        for key in in_dict.keys():
+            list_from_key = in_dict[key]
 
-        for key in in_list_of_dicts.keys():
-            list_from_key = in_list_of_dicts[key]
+            for index in list_from_key:
+                if index == in_index:
+                    return [True, get_tag_from_symbol(key)]
 
-            for tuple_from_list in list_from_key:
-                if tuple_from_list[0] == in_index:
-                    result_list.append((True, tuple_from_list[0], tuple_from_list[1], key))
-
-        return result_list if result_list else [(False, None, None, None), (False, None, None, None)]
+        return [False, None]
 
     def get_tag_from_symbol(in_symbol):
         if in_symbol == "S":
@@ -816,14 +814,14 @@ def launch_tkinter_app():
 
     word_order_subject_legend_label = ttk.Label(
         word_order_subject_legend_frame,
-        text="{ }",
-        font=("Segoe UI", 16),
+        text="  ",
+        font=("Segoe UI", 16, "underline"),
         foreground="red"
     )
 
     word_order_subject_description_legend_label = ttk.Label(
         word_order_subject_legend_frame,
-        text=" - подлежащее",
+        text="  – фраза с подлежащим",
         font=("Segoe UI", 12)
     )
 
@@ -831,14 +829,14 @@ def launch_tkinter_app():
 
     word_order_verb_legend_label = ttk.Label(
         word_order_verb_legend_frame,
-        text="{ }",
-        font=("Segoe UI", 16),
+        text="  ",
+        font=("Segoe UI", 16, "underline"),
         foreground="green"
     )
 
     word_order_verb_description_legend_label = ttk.Label(
         word_order_verb_legend_frame,
-        text=" - сказуемое",
+        text="  – фраза со сказуемым",
         font=("Segoe UI", 12)
     )
 
@@ -846,14 +844,14 @@ def launch_tkinter_app():
 
     word_order_object_legend_label = ttk.Label(
         word_order_object_legend_frame,
-        text="{ }",
-        font=("Segoe UI", 16),
+        text="  ",
+        font=("Segoe UI", 16, "underline"),
         foreground="blue"
     )
 
     word_order_object_description_legend_label = ttk.Label(
         word_order_object_legend_frame,
-        text=" - дополнение",
+        text="  – фраза с дополнением",
         font=("Segoe UI", 12)
     )
 
@@ -868,7 +866,7 @@ def launch_tkinter_app():
 
     lexical_units_description_legend_label = ttk.Label(
         lexical_units_legend_frame,
-        text=" - заменённая лексическая единица",
+        text=" – заменённая лексическая единица",
         font=("Segoe UI", 12)
     )
 
@@ -878,12 +876,12 @@ def launch_tkinter_app():
         isolation_degree_legend_frame,
         text="А",
         font=("Segoe UI", 16),
-        foreground="red"
+        foreground="#D78F26"
     )
 
     isolation_degree_description_legend_label = ttk.Label(
         isolation_degree_legend_frame,
-        text=" - изолированное слово",
+        text=" – изолированное слово",
         font=("Segoe UI", 12)
     )
 
@@ -898,7 +896,7 @@ def launch_tkinter_app():
 
     labeled_sound_description_legend_label = ttk.Label(
         labeled_sound_legend_frame,
-        text=" - маркированный звук",
+        text=" – маркированный звук",
         font=("Segoe UI", 12)
     )
 
@@ -912,15 +910,15 @@ def launch_tkinter_app():
     )
     transformed_text_widget["yscrollcommand"] = transformed_text_widget_scrollbar.set
     transformed_text_widget.tag_configure("just_bold_segoe", font=("Segoe UI", 12, "bold"))
-    transformed_text_widget.tag_configure("word_order_subject", foreground="red", font=("Segoe UI", 16, "bold"))
-    transformed_text_widget.tag_configure("word_order_verb", foreground="green", font=("Segoe UI", 16, "bold"))
-    transformed_text_widget.tag_configure("word_order_object", foreground="blue", font=("Segoe UI", 16, "bold"))
+    transformed_text_widget.tag_configure("word_order_subject", underline=True, underlinefg="red", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure("word_order_verb", underline=True, underlinefg="green", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure("word_order_object", underline=True, underlinefg="blue", font=("Segoe UI", 12))
     transformed_text_widget.tag_configure("replaced_lexical_unit", foreground="yellow", font=("Segoe UI", 12, "bold"))
-    transformed_text_widget.tag_configure("isolated_word", foreground="red", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure("isolated_word", foreground="#D78F26", font=("Segoe UI", 12))
     transformed_text_widget.tag_configure("labeled_sound", background="#3A58CF", font=("Segoe UI", 12))
     transformed_text_widget.tag_configure(
         "labeled_sound_in_isolated_word",
-        foreground="red",
+        foreground="#D78F26",
         background="#3A58CF",
         font=("Segoe UI", 12)
     )
@@ -1035,11 +1033,13 @@ def launch_tkinter_app():
                     if final_result[i] == ' ':
                         continue
 
-                    is_index_in_svo_phrase = has_index_in_tuple(i, word_order_result[1])
+                    is_index_in_svo_phrase = has_index_in_dict(i, word_order_result[1])
 
-                    try_to_print_open_bracket(is_index_in_svo_phrase)
+                    print("Is index ", i, " in SVO Phrase: ", is_index_in_svo_phrase)
 
-                    # print("Is index ", i, " in SVO Phrase: ", is_index_in_svo_phrase)
+                    cursor_before_word = transformed_text_widget.index(INSERT)
+
+                    print("Cursor before word: ", cursor_before_word)
 
                     if i in lexical_units_result[1]:
                         token_was_replaced = True
@@ -1060,26 +1060,28 @@ def launch_tkinter_app():
                             if token_was_replaced:
                                 transformed_text_widget.insert(END, ')', "replaced_lexical_unit")
 
-                            try_to_print_close_bracket(is_index_in_svo_phrase)
-
                             transformed_text_widget.insert(
                                 END,
                                 ' ' if i + 1 <= len(final_result) - 1 and final_result[
                                     i + 1] not in string.punctuation else ''
                             )
+
+                            if is_index_in_svo_phrase[0]:
+                                transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
                         else:
                             transformed_text_widget.insert(END, final_result[i], "isolated_word")
 
                             if token_was_replaced:
                                 transformed_text_widget.insert(END, ')', "replaced_lexical_unit")
 
-                            try_to_print_close_bracket(is_index_in_svo_phrase)
-
                             transformed_text_widget.insert(
                                 END,
                                 (' ' if i + 1 <= len(final_result) - 1 and final_result[
                                     i + 1] not in string.punctuation else '')
                             )
+
+                            if is_index_in_svo_phrase[0]:
+                                transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
                     else:
                         if i in labeled_sounds_result[1].keys():
                             for j in range(len(final_result[i])):
@@ -1091,20 +1093,19 @@ def launch_tkinter_app():
                             if token_was_replaced:
                                 transformed_text_widget.insert(END, ')', "replaced_lexical_unit")
 
-                            try_to_print_close_bracket(is_index_in_svo_phrase)
-
                             transformed_text_widget.insert(
                                 END,
                                 ' ' if i + 1 <= len(final_result) - 1 and final_result[
                                     i + 1] not in string.punctuation else ''
                             )
+
+                            if is_index_in_svo_phrase[0]:
+                                transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
                         else:
                             transformed_text_widget.insert(END, final_result[i])
 
                             if token_was_replaced:
                                 transformed_text_widget.insert(END, ')', "replaced_lexical_unit")
-
-                            try_to_print_close_bracket(is_index_in_svo_phrase)
 
                             transformed_text_widget.insert(
                                 END,
@@ -1112,7 +1113,11 @@ def launch_tkinter_app():
                                     i + 1] not in string.punctuation else '')
                             )
 
+                            if is_index_in_svo_phrase[0]:
+                                transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
+
                     token_was_replaced = False
+                    print("Cursor after word: ", transformed_text_widget.index(INSERT))
 
                 print('\n')
 
@@ -1197,13 +1202,16 @@ def launch_tkinter_app():
 
     word_order_subject_legend_label.pack(side="left")
     word_order_subject_description_legend_label.pack(side="left")
+    word_order_subject_legend_frame.pack(anchor="w")
+
     word_order_verb_legend_label.pack(side="left")
     word_order_verb_description_legend_label.pack(side="left")
+    word_order_verb_legend_frame.pack(anchor="w")
+
     word_order_object_legend_label.pack(side="left")
     word_order_object_description_legend_label.pack(side="left")
-    word_order_subject_legend_frame.pack(anchor="w")
-    word_order_verb_legend_frame.pack(anchor="w")
     word_order_object_legend_frame.pack(anchor="w")
+
     word_order_legend_frame.pack(side="left", fill=X, expand=True)
 
     ttk.Frame(transformation_legend_frame).pack(side="left", padx=7.5)  # Vertical spacer
