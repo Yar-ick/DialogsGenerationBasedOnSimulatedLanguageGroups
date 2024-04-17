@@ -42,33 +42,33 @@ def add_phrases_to_sentence(dict_with_parameters):
     word_order_to_phrases = {
         WordOrder.SubjectVerbObject: [
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
         ],
         WordOrder.SubjectObjectVerb: [
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]]
+            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]]
         ],
         WordOrder.VerbSubjectObject: [
-            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]]
+            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]]
         ],
         WordOrder.VerbObjectSubject: [
-            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]]
         ],
         WordOrder.ObjectVerbSubject: [
-            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]]
         ],
         WordOrder.ObjectSubjectVerb: [
-            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]]
+            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]]
         ]
     }
 
@@ -96,20 +96,20 @@ def add_phrases_to_sentence(dict_with_parameters):
         third_phrase_indexes += [index for index in range(sentence_len_before_append, len(in_sentence))]
 
     word_order_to_phrase_indexes = {
-        WordOrder.SubjectVerbObject: [first_phrase_indexes, second_phrase_indexes, third_phrase_indexes],
-        WordOrder.SubjectObjectVerb: [first_phrase_indexes, third_phrase_indexes, second_phrase_indexes],
-        WordOrder.VerbSubjectObject: [second_phrase_indexes, first_phrase_indexes, third_phrase_indexes],
-        WordOrder.VerbObjectSubject: [third_phrase_indexes, first_phrase_indexes, second_phrase_indexes],
-        WordOrder.ObjectVerbSubject: [third_phrase_indexes, second_phrase_indexes, first_phrase_indexes],
-        WordOrder.ObjectSubjectVerb: [second_phrase_indexes, third_phrase_indexes, first_phrase_indexes]
+        WordOrder.SubjectVerbObject: [first_phrase_indexes,     second_phrase_indexes,  third_phrase_indexes],
+        WordOrder.SubjectObjectVerb: [first_phrase_indexes,     third_phrase_indexes,   second_phrase_indexes],
+        WordOrder.VerbSubjectObject: [second_phrase_indexes,    first_phrase_indexes,   third_phrase_indexes],
+        WordOrder.VerbObjectSubject: [third_phrase_indexes,     first_phrase_indexes,   second_phrase_indexes],
+        WordOrder.ObjectVerbSubject: [third_phrase_indexes,     second_phrase_indexes,  first_phrase_indexes],
+        WordOrder.ObjectSubjectVerb: [second_phrase_indexes,    third_phrase_indexes,   first_phrase_indexes]
     }
 
     out_phrase_indexes = word_order_to_phrase_indexes[dict_with_parameters["WordOrder"]]
 
-    print("Sentence with added phrases: ", in_sentence)
-    print("Subject phrase indexes: ", out_phrase_indexes[0])
-    print("Verb phrase indexes: ", out_phrase_indexes[1])
-    print("Object phrase indexes: ", out_phrase_indexes[2])
+    # print("Sentence with added phrases: ", in_sentence)
+    # print("Subject phrase indexes: ", out_phrase_indexes[0])
+    # print("Verb phrase indexes: ", out_phrase_indexes[1])
+    # print("Object phrase indexes: ", out_phrase_indexes[2])
 
     return [in_sentence, out_phrase_indexes[0], out_phrase_indexes[1], out_phrase_indexes[2]]
 

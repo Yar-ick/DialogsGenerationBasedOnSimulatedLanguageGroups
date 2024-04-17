@@ -44,6 +44,7 @@ def change_text_isolation_degree_list(text, isolation_degree):
 
     for token in word_tokens:
         parsed_word = morph.parse(token)
+
         if isolation_degree == 1:
             if parsed_word[0].tag.POS == "VERB":
                 word_tokens[index] = parsed_word[0].normal_form
