@@ -88,7 +88,8 @@ def launch_tkinter_app():
     window.title('Диалогус')
     window.iconbitmap(default="./icons/Icon.ico")
 
-    w = 1500
+    # w = 1500
+    w = 1000
     h = 1080
     ws = window.winfo_screenwidth()
     hs = window.winfo_screenheight()
@@ -910,9 +911,11 @@ def launch_tkinter_app():
     )
     transformed_text_widget["yscrollcommand"] = transformed_text_widget_scrollbar.set
     transformed_text_widget.tag_configure("just_bold_segoe", font=("Segoe UI", 12, "bold"))
-    transformed_text_widget.tag_configure("word_order_subject", underline=True, underlinefg="red", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure("word_order_subject", underline=True, underlinefg="red",
+                                          font=("Segoe UI", 12))
     transformed_text_widget.tag_configure("word_order_verb", underline=True, underlinefg="green", font=("Segoe UI", 12))
-    transformed_text_widget.tag_configure("word_order_object", underline=True, underlinefg="blue", font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure("word_order_object", underline=True, underlinefg="blue",
+                                          font=("Segoe UI", 12))
     transformed_text_widget.tag_configure("replaced_lexical_unit", foreground="yellow", font=("Segoe UI", 12, "bold"))
     transformed_text_widget.tag_configure("isolated_word", foreground="#D78F26", font=("Segoe UI", 12))
     transformed_text_widget.tag_configure("labeled_sound", background="#3A58CF", font=("Segoe UI", 12))
@@ -939,24 +942,6 @@ def launch_tkinter_app():
     gear_image = gear_image.subsample(12, 12)
 
     def on_transform_text_button_clicked():
-        def try_to_print_open_bracket(in_is_index_in_svo_phrase):
-            for result_tuple in in_is_index_in_svo_phrase:
-                if result_tuple[0] and result_tuple[2] == '{':
-                    transformed_text_widget.insert(
-                        END,
-                        '{',
-                        get_tag_from_symbol(result_tuple[3])
-                    )
-
-        def try_to_print_close_bracket(in_is_index_in_svo_phrase):
-            for result_tuple in in_is_index_in_svo_phrase:
-                if result_tuple[0] and result_tuple[2] == '}':
-                    transformed_text_widget.insert(
-                        END,
-                        '}',
-                        get_tag_from_symbol(result_tuple[3])
-                    )
-
         input_text = input_text_widget.get("1.0", END)
 
         if not input_text:
@@ -1257,8 +1242,8 @@ def launch_tkinter_app():
     """------------------------------TEXT TRANSFORMATION FRAME SECTION END------------------------------"""
     # endregion
 
-    # region GenerationFrame
-    """------------------------------GENERATION FRAME------------------------------"""
+    # region ConversationWithCharacter
+    """------------------------------CONVERSATION WITH CHARACTER FRAME SECTION------------------------------"""
 
     generation_frame = ttk.Frame(notebook)
 
@@ -1304,8 +1289,14 @@ def launch_tkinter_app():
     send_prompt_image = PhotoImage(file="./icons/SendPrompt.png")
     send_prompt_image = send_prompt_image.subsample(3, 3)
 
+    you_image = PhotoImage(file="./icons/You.png")
+    you_image = you_image.subsample(12, 12)
+
+    character_image = PhotoImage(file="./icons/Character.png")
+    character_image = character_image.subsample(12, 12)
+
     def on_start_conversation_button_clicked():
-        client = PyCAI("42f1d0ea1d29f9a116c4b9d7ce75748f757a949a")
+        client = PyCAI("42f1d0ea1d29f9a116c4b9d7ce75748f757a949a")  # My own token from Character.ai
         chat = client.chat.get_chat(character_token_entry.get())
 
         participants = chat['participants']
@@ -1324,7 +1315,8 @@ def launch_tkinter_app():
 
         def on_send_prompt_button_clicked():
             if prompt_entry.get():
-                chat_text.insert(END, "Вы: " + prompt_entry.get() + "\n\n")
+                chat_text.image_create(END, image=you_image)
+                chat_text.insert(END, " Вы:\n" + prompt_entry.get() + "\n\n")
 
                 data = client.chat.send_message(
                     chat['external_id'], tgt, prompt_entry.get()
@@ -1335,30 +1327,70 @@ def launch_tkinter_app():
                 character_name = data['src_char']['participant']['name']
                 text = data['replies'][0]['text']
                 translated_text = GoogleTranslator(source='en', target='ru').translate(text)
-                selected_language_group = get_language_group_from_list(saved_language_groups,
-                                                                       language_group_choice.get())
-
-                result = word_order.change_text_word_order(
-                    translated_text,
-                    word_order.WordOrder(selected_language_group["word_order"]),
-                    False
-                )
-                result = lexical_units.replace_lexical_units_in_text(
-                    result,
-                    selected_language_group["lexical_units"]
-                )
-                result = isolation_degree.change_text_isolation_degree(
-                    result,
-                    selected_language_group["isolation_degree"]
-                )
-                result = labeled_sounds.apply_labeled_sounds_to_text(
-                    result,
-                    selected_language_group["labeled_sounds"]
+                selected_language_group = get_language_group_from_list(
+                    saved_language_groups,
+                    language_group_choice.get()
                 )
 
-                result_for_print = result.split(".")
+                chat_text.image_create(END, image=character_image)
+                chat_text.insert(END, ' ' + character_name + ":\n" + text + "\n\n")
 
-                chat_text.insert(END, character_name + ": " + result + "\n\n")
+                chat_text.image_create(END, image=character_image)
+                chat_text.image_create(END, image=gear_image)
+                chat_text.insert(END, ' ' + character_name + ":\n")
+
+                paragraphs = [p for p in translated_text.split('\n') if p]
+
+                for paragraph in paragraphs:
+                    sentence_tokens = nltk.sent_tokenize(paragraph)
+
+                    for sentence_token in sentence_tokens:
+                        word_tokens = nltk.word_tokenize(sentence_token)
+
+                        word_order_result = word_order.change_text_word_order(
+                            word_tokens,
+                            word_order.WordOrder(selected_language_group["word_order"]),
+                            False
+                        )
+
+                        lexical_units_result = lexical_units.replace_lexical_units_in_text(
+                            word_order_result[0],
+                            selected_language_group["lexical_units"],
+                            False
+                        )
+
+                        isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
+                            lexical_units_result[0],
+                            selected_language_group["isolation_degree"]
+                        )
+
+                        labeled_sounds_result = labeled_sounds.apply_labeled_sounds_to_text(
+                            isolation_degree_result[0],
+                            selected_language_group["labeled_sounds"]
+                        )
+
+                        final_result = labeled_sounds_result[0]
+
+                        for i in range(len(final_result)):
+                            final_result[i] = final_result[i].lower()
+
+                        final_result[0] = final_result[0].capitalize()
+
+                        for i in range(len(final_result)):
+                            if final_result[i] == ' ':
+                                continue
+
+                            chat_text.insert(END, final_result[i])
+
+                            chat_text.insert(
+                                END,
+                                (' ' if i + 1 <= len(final_result) - 1 and final_result[
+                                    i + 1] not in string.punctuation else '')
+                            )
+
+                        chat_text.insert(END, ' ')
+
+                chat_text.insert(END, "\n\n")
 
         send_prompt_button = ttk.Button(
             prompt_frame,
@@ -1384,7 +1416,7 @@ def launch_tkinter_app():
     start_conversation_button.pack(expand=True, fill=X, side="left", anchor="n", padx=15)
     generation_frame.pack(fill=BOTH, expand=True)
 
-    """------------------------------GENERATION FRAME SECTION END------------------------------"""
+    """------------------------------ONVERSATION WITH CHARACTER FRAME SECTION END------------------------------"""
     # endregion
 
     language_group_logo = PhotoImage(file="./icons/LanguageGroup.png")
