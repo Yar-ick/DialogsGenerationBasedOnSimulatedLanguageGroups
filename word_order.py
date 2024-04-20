@@ -1,10 +1,10 @@
 import string
 
-import nltk
 import spacy
 
 from enum import Enum
 from pymorphy3 import MorphAnalyzer
+from spacy import displacy
 
 
 class WordOrder(Enum):
@@ -130,7 +130,7 @@ def change_text_word_order(text, word_order, print_debug_info=False):
     if word_order == WordOrder.SubjectVerbObject:
         return [text, svo_phrases]
 
-    nlp = spacy.load("ru_core_news_lg")
+    spacy_russian_model = spacy.load("ru_core_news_lg")
 
     out_sentence = []
     subject_phrase_indexes = []
@@ -139,11 +139,21 @@ def change_text_word_order(text, word_order, print_debug_info=False):
 
     sentence_parts = " ".join(text).split(',')
 
+    if print_debug_info:
+        print("Sentence parts:")
+
+    # sentence_text = " ".join(text)
+    # sentence_parts = [sentence_text]
+
+    part_index = 0
     for part in sentence_parts:
+        print("Part ", part_index, ": ", part)
+        part_index += 1
+
         subject_phrase = []
         verb_phrase = []
         object_phrase = []
-        analyzed_part = nlp(part)
+        analyzed_part = spacy_russian_model(part)
 
         for token in analyzed_part:
             # Subject phrase
@@ -151,9 +161,10 @@ def change_text_word_order(text, word_order, print_debug_info=False):
                 subject_phrase.append(token.text)
             # Verb phrase
             elif (
-                    (token.dep_ == "ROOT")
+                    token.dep_ == "ROOT"
                     or
-                    ((token.dep_ == "xcomp" or token.dep_ == "advmod") and token.head.dep_ == "ROOT")
+                    # ((token.dep_ == "xcomp" or token.dep_ == "advmod") and token.head.dep_ == "ROOT")
+                    token.head.dep_ == "ROOT"
             ):
                 verb_phrase.append(token.text)
             # Object phrase
@@ -186,15 +197,22 @@ def change_text_word_order(text, word_order, print_debug_info=False):
         else:
             out_sentence += part[len(part) - 1]
 
-        # if print_debug_info:
-        #     print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
-        #     print("==========================================================================================")
-        #     for token in analyzed_part:
-        #         print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
-        #             spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
-        #                                                 token.head.text))
-        #     print('\n')
-        # displacy.render(analyzed_part, style='dep', jupyter=True)
+        if print_debug_info:
+            print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
+            print("==========================================================================================")
+            for token in analyzed_part:
+                print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
+                    spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
+                                                        token.head.text))
+            print('\n')
+            # displacy.render(analyzed_part, style='dep', jupyter=False)
+            # options = {
+            #     "compact": True,
+            #     "bg": "#09a3d5",
+            #     "color": "white",
+            #     "font": "Source Sans Pro"
+            # }
+            # displacy.serve(analyzed_part, style="dep", options=options)
 
     svo_phrases.update({"S": subject_phrase_indexes})
     svo_phrases.update({"V": verb_phrase_indexes})

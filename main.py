@@ -88,8 +88,8 @@ def launch_tkinter_app():
     window.title('Диалогус')
     window.iconbitmap(default="./icons/Icon.ico")
 
-    # w = 1500
-    w = 1000
+    w = 1500
+    # w = 1000
     h = 1080
     ws = window.winfo_screenwidth()
     hs = window.winfo_screenheight()
@@ -179,7 +179,7 @@ def launch_tkinter_app():
     lexical_units_table.configure(yscroll=lexical_unit_table_scrollbar.set)
     lexical_unit_table_scrollbar.pack(side="left", fill="y")
 
-    lexical_unit_couples = [("терпение", "халтура"), ("наблюдательность", "безолаберность")]
+    lexical_unit_couples = [("терпение", "халтура"), ("наблюдательность", "безалаберность")]
 
     for lexical_unit in lexical_unit_couples:
         lexical_units_table.insert("", END, values=lexical_unit)
@@ -304,6 +304,9 @@ def launch_tkinter_app():
     labeled_sounds_table_scrollbar.pack(side="left", fill="y")
 
     ttk.Frame(labeled_sounds_frame).pack(side="left", padx=7.5)  # Spacer after labeled sound table
+
+    labeled_sounds_table.insert("", END, values=("г", "гх"))
+    labeled_sounds_table.insert("", END, values=("р", "л"))
 
     def on_add_labeled_sound_button_clicked():
         labeled_sounds_table.insert(
@@ -985,13 +988,13 @@ def launch_tkinter_app():
                 word_order_result = word_order.change_text_word_order(
                     word_tokens,
                     word_order.WordOrder(fast_language_group["word_order"]),
-                    False
+                    True
                 )
 
                 lexical_units_result = lexical_units.replace_lexical_units_in_text(
                     word_order_result[0],
                     fast_language_group["lexical_units"],
-                    False
+                    True
                 )
 
                 isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
@@ -1020,11 +1023,11 @@ def launch_tkinter_app():
 
                     is_index_in_svo_phrase = has_index_in_dict(i, word_order_result[1])
 
-                    print("Is index ", i, " in SVO Phrase: ", is_index_in_svo_phrase)
+                    # print("Is index ", i, " in SVO Phrase: ", is_index_in_svo_phrase)
 
                     cursor_before_word = transformed_text_widget.index(INSERT)
 
-                    print("Cursor before word: ", cursor_before_word)
+                    # print("Cursor before word: ", cursor_before_word)
 
                     if i in lexical_units_result[1]:
                         token_was_replaced = True
@@ -1102,7 +1105,7 @@ def launch_tkinter_app():
                                 transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
 
                     token_was_replaced = False
-                    print("Cursor after word: ", transformed_text_widget.index(INSERT))
+                    # print("Cursor after word: ", transformed_text_widget.index(INSERT))
 
                 print('\n')
 
@@ -1326,7 +1329,7 @@ def launch_tkinter_app():
 
                 character_name = data['src_char']['participant']['name']
                 text = data['replies'][0]['text']
-                translated_text = GoogleTranslator(source='en', target='ru').translate(text)
+                # translated_text = GoogleTranslator(source='en', target='ru').translate(text)
                 selected_language_group = get_language_group_from_list(
                     saved_language_groups,
                     language_group_choice.get()
@@ -1339,7 +1342,7 @@ def launch_tkinter_app():
                 chat_text.image_create(END, image=gear_image)
                 chat_text.insert(END, ' ' + character_name + ":\n")
 
-                paragraphs = [p for p in translated_text.split('\n') if p]
+                paragraphs = [p for p in text.split('\n') if p]
 
                 for paragraph in paragraphs:
                     sentence_tokens = nltk.sent_tokenize(paragraph)
