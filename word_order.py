@@ -16,21 +16,60 @@ class WordOrder(Enum):
     ObjectSubjectVerb = 5
 
 
+class PhraseAffiliation(Enum):
+    SubjectPhrase = 0
+    VerbPhrase = 1
+    ObjectPhrase = 2
+    UnknownPhrase = 3
+
+
+def detect_phrase_affiliation_of_token(token):
+    # Subject phrase
+    if is_token_from_subject_phrase(token):
+        return PhraseAffiliation.SubjectPhrase
+
+    # Verb phrase
+    if (
+        token.dep_ == "ROOT"
+        or
+        (
+            token.head.dep_ == "ROOT"
+            and
+            (token.dep_ == "xcomp" or token.dep_ == "advmod")
+            and
+            token.dep_ != "punct"
+        )
+    ):
+        return PhraseAffiliation.VerbPhrase
+
+    # Object phrase
+    if token.dep_ != "punct" and token.pos_ != "SPACE":
+        return PhraseAffiliation.ObjectPhrase
+
+    return PhraseAffiliation.UnknownPhrase
+
+
 def is_token_from_subject_phrase(token):
     morph = MorphAnalyzer()
     parsed_token = morph.parse(token.text)[0]
 
-    # If token is subject
-    if parsed_token.tag.number is not None:
-        # print("Именительный падеж: ", parsed_token.inflect({parsed_token.tag.number, 'nomn'}).word)
-        if (
-                token.dep_ == "nsubj"
-                and
-                token.head.dep_ == "ROOT"
-                # and
-                # parsed_token.inflect({parsed_token.tag.number, 'nomn'}).word == Token.text.lower()
-        ):
-            return True
+    # # If token is subject
+    # if parsed_token.tag.number is not None:
+    #     # print("Именительный падеж: ", parsed_token.inflect({parsed_token.tag.number, 'nomn'}).word)
+    #     if (
+    #             token.dep_ == "nsubj"
+    #             and
+    #             token.head.dep_ == "ROOT"
+    #             # and
+    #             # parsed_token.inflect({parsed_token.tag.number, 'nomn'}).word == Token.text.lower()
+    #     ):
+    #         return True
+    if (
+            token.dep_ == "nsubj" and token.head.dep_ == "ROOT"
+            or
+            token.dep_ == "cc" and token.head.head is not None and token.head.head.head.dep_ == "ROOT"
+    ):
+        return True
     # If token is subject
     if token.head.dep_ == "nsubj":
         return True
@@ -42,33 +81,33 @@ def add_phrases_to_sentence(dict_with_parameters):
     word_order_to_phrases = {
         WordOrder.SubjectVerbObject: [
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
         ],
         WordOrder.SubjectObjectVerb: [
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]]
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]]
         ],
         WordOrder.VerbSubjectObject: [
-            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]]
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]]
         ],
         WordOrder.VerbObjectSubject: [
-            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
-            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]]
         ],
         WordOrder.ObjectVerbSubject: [
-            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]]
         ],
         WordOrder.ObjectSubjectVerb: [
-            [dict_with_parameters["ObjectPhrase"],  dict_with_parameters["ObjectPhraseIndexes"]],
+            [dict_with_parameters["ObjectPhrase"], dict_with_parameters["ObjectPhraseIndexes"]],
             [dict_with_parameters["SubjectPhrase"], dict_with_parameters["SubjectPhraseIndexes"]],
-            [dict_with_parameters["VerbPhrase"],    dict_with_parameters["VerbPhraseIndexes"]]
+            [dict_with_parameters["VerbPhrase"], dict_with_parameters["VerbPhraseIndexes"]]
         ]
     }
 
@@ -96,12 +135,12 @@ def add_phrases_to_sentence(dict_with_parameters):
         third_phrase_indexes += [index for index in range(sentence_len_before_append, len(in_sentence))]
 
     word_order_to_phrase_indexes = {
-        WordOrder.SubjectVerbObject: [first_phrase_indexes,     second_phrase_indexes,  third_phrase_indexes],
-        WordOrder.SubjectObjectVerb: [first_phrase_indexes,     third_phrase_indexes,   second_phrase_indexes],
-        WordOrder.VerbSubjectObject: [second_phrase_indexes,    first_phrase_indexes,   third_phrase_indexes],
-        WordOrder.VerbObjectSubject: [third_phrase_indexes,     first_phrase_indexes,   second_phrase_indexes],
-        WordOrder.ObjectVerbSubject: [third_phrase_indexes,     second_phrase_indexes,  first_phrase_indexes],
-        WordOrder.ObjectSubjectVerb: [second_phrase_indexes,    third_phrase_indexes,   first_phrase_indexes]
+        WordOrder.SubjectVerbObject: [first_phrase_indexes, second_phrase_indexes, third_phrase_indexes],
+        WordOrder.SubjectObjectVerb: [first_phrase_indexes, third_phrase_indexes, second_phrase_indexes],
+        WordOrder.VerbSubjectObject: [second_phrase_indexes, first_phrase_indexes, third_phrase_indexes],
+        WordOrder.VerbObjectSubject: [third_phrase_indexes, first_phrase_indexes, second_phrase_indexes],
+        WordOrder.ObjectVerbSubject: [third_phrase_indexes, second_phrase_indexes, first_phrase_indexes],
+        WordOrder.ObjectSubjectVerb: [second_phrase_indexes, third_phrase_indexes, first_phrase_indexes]
     }
 
     out_phrase_indexes = word_order_to_phrase_indexes[dict_with_parameters["WordOrder"]]
@@ -155,20 +194,17 @@ def change_text_word_order(text, word_order, print_debug_info=False):
         object_phrase = []
         analyzed_part = spacy_russian_model(part)
 
+        # Detect phrase affiliation of all tokens
         for token in analyzed_part:
-            # Subject phrase
-            if is_token_from_subject_phrase(token):
+            token_phrase_affiliation = detect_phrase_affiliation_of_token(token)
+
+            if token_phrase_affiliation is PhraseAffiliation.UnknownPhrase:
+                continue
+            elif token_phrase_affiliation is PhraseAffiliation.SubjectPhrase:
                 subject_phrase.append(token.text)
-            # Verb phrase
-            elif (
-                    token.dep_ == "ROOT"
-                    or
-                    # ((token.dep_ == "xcomp" or token.dep_ == "advmod") and token.head.dep_ == "ROOT")
-                    token.head.dep_ == "ROOT"
-            ):
+            elif token_phrase_affiliation is PhraseAffiliation.VerbPhrase:
                 verb_phrase.append(token.text)
-            # Object phrase
-            elif token.dep_ != "punct" and token.pos_ != "SPACE":
+            elif token_phrase_affiliation is PhraseAffiliation.ObjectPhrase:
                 object_phrase.append(token.text)
 
         if print_debug_info:
@@ -220,5 +256,6 @@ def change_text_word_order(text, word_order, print_debug_info=False):
 
     if print_debug_info:
         print("SVO Phrases: ", svo_phrases)
+        print("Biggest key in S Phrase: ", max(svo_phrases.values()))
 
     return [out_sentence, svo_phrases]

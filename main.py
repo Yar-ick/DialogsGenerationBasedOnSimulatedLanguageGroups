@@ -1,5 +1,4 @@
 import string
-
 import word_order
 import lexical_units
 import isolation_degree
@@ -9,6 +8,7 @@ import json
 import os.path
 import nltk
 import difflib
+import time
 
 from characterai import PyCAI
 from deep_translator import GoogleTranslator
@@ -71,9 +71,9 @@ def launch_tkinter_app():
 
             for index in list_from_key:
                 if index == in_index:
-                    return [True, get_tag_from_symbol(key)]
+                    return [True, get_tag_from_symbol(key), index == max(list_from_key)]
 
-        return [False, None]
+        return [False, None, False]
 
     def get_tag_from_symbol(in_symbol):
         if in_symbol == "S":
@@ -979,17 +979,33 @@ def launch_tkinter_app():
         # Input string split like this because nltk.tokenize does not take into account \n symbol
         paragraphs = [p for p in input_text.split('\n') if p]
 
+        word_order_total_execution_time = 0
+        lexical_units_total_execution_time = 0
+        isolation_degree_total_execution_time = 0
+        labeled_sounds_total_execution_time = 0
+        sentences_count = 0
+        tokens_count = 0
+
         for paragraph in paragraphs:
             sentence_tokens = nltk.sent_tokenize(paragraph)
+            sentences_count += len(sentence_tokens)
 
             for sentence_token in sentence_tokens:
                 word_tokens = nltk.word_tokenize(sentence_token)
+                tokens_count += len(word_tokens)
+
+                word_order_start_time = time.time()
 
                 word_order_result = word_order.change_text_word_order(
                     word_tokens,
                     word_order.WordOrder(fast_language_group["word_order"]),
-                    True
+                    False
                 )
+
+                word_order_end_time = time.time()
+                word_order_total_execution_time += word_order_end_time - word_order_start_time
+
+                lexical_units_start_time = time.time()
 
                 lexical_units_result = lexical_units.replace_lexical_units_in_text(
                     word_order_result[0],
@@ -997,15 +1013,28 @@ def launch_tkinter_app():
                     True
                 )
 
+                lexical_units_end_time = time.time()
+                lexical_units_total_execution_time += lexical_units_end_time - lexical_units_start_time
+
+                isolation_degree_start_time = time.time()
+
                 isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
                     lexical_units_result[0],
                     fast_language_group["isolation_degree"]
                 )
 
+                isolation_degree_end_time = time.time()
+                isolation_degree_total_execution_time += isolation_degree_end_time - isolation_degree_start_time
+
+                labeled_sounds_start_time = time.time()
+
                 labeled_sounds_result = labeled_sounds.apply_labeled_sounds_to_text(
                     isolation_degree_result[0],
                     fast_language_group["labeled_sounds"]
                 )
+
+                labeled_sounds_end_time = time.time()
+                labeled_sounds_total_execution_time += labeled_sounds_end_time - labeled_sounds_start_time
 
                 final_result = labeled_sounds_result[0]
 
@@ -1054,6 +1083,8 @@ def launch_tkinter_app():
                                     i + 1] not in string.punctuation else ''
                             )
 
+                            # cursor_end = INSERT + ("-1c" if i + 1 <= len(final_result) - 1 else "") if is_index_in_svo_phrase[2] else INSERT
+
                             if is_index_in_svo_phrase[0]:
                                 transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
                         else:
@@ -1067,6 +1098,8 @@ def launch_tkinter_app():
                                 (' ' if i + 1 <= len(final_result) - 1 and final_result[
                                     i + 1] not in string.punctuation else '')
                             )
+
+                            # cursor_end = INSERT + ("-1c" if i + 1 <= len(final_result) - 1 else "") if is_index_in_svo_phrase[2] else INSERT
 
                             if is_index_in_svo_phrase[0]:
                                 transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
@@ -1087,6 +1120,8 @@ def launch_tkinter_app():
                                     i + 1] not in string.punctuation else ''
                             )
 
+                            # cursor_end = INSERT + ("-1c" if i + 1 <= len(final_result) - 1 else "") if is_index_in_svo_phrase[2] else INSERT
+
                             if is_index_in_svo_phrase[0]:
                                 transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
                         else:
@@ -1101,6 +1136,8 @@ def launch_tkinter_app():
                                     i + 1] not in string.punctuation else '')
                             )
 
+                            # cursor_end = INSERT + ("-1c" if i + 1 <= len(final_result) - 1 else "") if is_index_in_svo_phrase[2] else INSERT
+
                             if is_index_in_svo_phrase[0]:
                                 transformed_text_widget.tag_add(is_index_in_svo_phrase[1], cursor_before_word, INSERT)
 
@@ -1112,6 +1149,13 @@ def launch_tkinter_app():
                 transformed_text_widget.insert(END, ' ')
 
             transformed_text_widget.insert(END, "\n\n")
+
+        print("Sentences total count: ", sentences_count)
+        print("Tokens count: ", tokens_count)
+        print("Word order total execution time in seconds: ", word_order_total_execution_time)
+        print("Lexical units total execution time in seconds: ", lexical_units_total_execution_time)
+        print("Isolation degree total execution time in seconds: ", isolation_degree_total_execution_time)
+        print("Labeled sounds total execution time in seconds: ", labeled_sounds_total_execution_time)
 
     transform_text_button = ttk.Button(
         transformation_field_frame,
