@@ -816,6 +816,11 @@ def launch_tkinter_app():
 
     word_order_subject_legend_frame = ttk.Frame(word_order_legend_frame)
 
+    selected_style = StringVar()
+
+    def on_word_order_subject_style_clicked(event):
+        selected_style.set("word_order_subject")
+
     word_order_subject_legend_label = ttk.Label(
         word_order_subject_legend_frame,
         text="  ",
@@ -829,7 +834,13 @@ def launch_tkinter_app():
         font=("Segoe UI", 12)
     )
 
+    word_order_subject_legend_label.bind("<Button-1>", on_word_order_subject_style_clicked)
+    word_order_subject_description_legend_label.bind("<Button-1>", on_word_order_subject_style_clicked)
+
     word_order_verb_legend_frame = ttk.Frame(word_order_legend_frame)
+
+    def on_word_order_verb_style_clicked(event):
+        selected_style.set("word_order_verb")
 
     word_order_verb_legend_label = ttk.Label(
         word_order_verb_legend_frame,
@@ -844,7 +855,13 @@ def launch_tkinter_app():
         font=("Segoe UI", 12)
     )
 
+    word_order_verb_legend_label.bind("<Button-1>", on_word_order_verb_style_clicked)
+    word_order_verb_description_legend_label.bind("<Button-1>", on_word_order_verb_style_clicked)
+
     word_order_object_legend_frame = ttk.Frame(word_order_legend_frame)
+
+    def on_word_order_object_style_clicked(event):
+        selected_style.set("word_order_object")
 
     word_order_object_legend_label = ttk.Label(
         word_order_object_legend_frame,
@@ -858,6 +875,9 @@ def launch_tkinter_app():
         text="  – фраза с дополнением",
         font=("Segoe UI", 12)
     )
+
+    word_order_object_legend_label.bind("<Button-1>", on_word_order_object_style_clicked)
+    word_order_object_description_legend_label.bind("<Button-1>", on_word_order_object_style_clicked)
 
     lexical_units_legend_frame = ttk.Frame(transformation_legend_frame)
 
@@ -914,11 +934,19 @@ def launch_tkinter_app():
     )
     transformed_text_widget["yscrollcommand"] = transformed_text_widget_scrollbar.set
     transformed_text_widget.tag_configure("just_bold_segoe", font=("Segoe UI", 12, "bold"))
-    transformed_text_widget.tag_configure("word_order_subject", underline=True, underlinefg="red",
-                                          font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure(
+        "word_order_subject",
+        underline=True,
+        underlinefg="red",
+        font=("Segoe UI", 12)
+    )
     transformed_text_widget.tag_configure("word_order_verb", underline=True, underlinefg="green", font=("Segoe UI", 12))
-    transformed_text_widget.tag_configure("word_order_object", underline=True, underlinefg="blue",
-                                          font=("Segoe UI", 12))
+    transformed_text_widget.tag_configure(
+        "word_order_object",
+        underline=True,
+        underlinefg="blue",
+        font=("Segoe UI", 12)
+    )
     transformed_text_widget.tag_configure("replaced_lexical_unit", foreground="yellow", font=("Segoe UI", 12, "bold"))
     transformed_text_widget.tag_configure("isolated_word", foreground="#D78F26", font=("Segoe UI", 12))
     transformed_text_widget.tag_configure("labeled_sound", background="#3A58CF", font=("Segoe UI", 12))
@@ -928,6 +956,29 @@ def launch_tkinter_app():
         background="#3A58CF",
         font=("Segoe UI", 12)
     )
+
+    cursor_start = StringVar()
+    cursor_end = StringVar()
+
+    def cache_cursor_start(event):
+        cursor_start.set(transformed_text_widget.index(CURRENT))
+
+    def cache_cursor_end(event):
+        cursor_end.set(transformed_text_widget.index(INSERT))
+
+    def add_selected_style_helper(event):
+        if cursor_start.get() and cursor_end.get() and selected_style.get():
+            # transformed_text_widget.tag_remove(selected_style, cursor_start.get(), cursor_end.get())
+            transformed_text_widget.tag_add(selected_style.get(), cursor_start.get(), cursor_end.get())
+
+    def remove_selected_style_helper(event):
+        if cursor_start.get() and cursor_end.get() and selected_style.get():
+            transformed_text_widget.tag_remove(selected_style.get(), cursor_start.get(), cursor_end.get())
+
+    transformed_text_widget.bind("<Button-1>", cache_cursor_start)
+    transformed_text_widget.bind("<ButtonRelease-1>", cache_cursor_end)
+    transformed_text_widget.bind("<Button-3>", add_selected_style_helper)
+    transformed_text_widget.bind("<Control-3>", remove_selected_style_helper)
 
     input_text_widget_frame = ttk.Frame(transformation_field_frame)
 
@@ -947,7 +998,7 @@ def launch_tkinter_app():
     def on_transform_text_button_clicked():
         input_text = input_text_widget.get("1.0", END)
 
-        if not input_text:
+        if not input_text or input_text == '\n':
             return
 
         fast_lexical_units = {}
@@ -1010,7 +1061,7 @@ def launch_tkinter_app():
                 lexical_units_result = lexical_units.replace_lexical_units_in_text(
                     word_order_result[0],
                     fast_language_group["lexical_units"],
-                    True
+                    False
                 )
 
                 lexical_units_end_time = time.time()
@@ -1144,18 +1195,20 @@ def launch_tkinter_app():
                     token_was_replaced = False
                     # print("Cursor after word: ", transformed_text_widget.index(INSERT))
 
-                print('\n')
+                # print('\n')
 
                 transformed_text_widget.insert(END, ' ')
 
             transformed_text_widget.insert(END, "\n\n")
 
+        print("\n\n")
         print("Sentences total count: ", sentences_count)
         print("Tokens count: ", tokens_count)
         print("Word order total execution time in seconds: ", word_order_total_execution_time)
         print("Lexical units total execution time in seconds: ", lexical_units_total_execution_time)
         print("Isolation degree total execution time in seconds: ", isolation_degree_total_execution_time)
         print("Labeled sounds total execution time in seconds: ", labeled_sounds_total_execution_time)
+        print("Total execution time in seconds: ", word_order_total_execution_time + lexical_units_total_execution_time + isolation_degree_total_execution_time + labeled_sounds_total_execution_time)
 
     transform_text_button = ttk.Button(
         transformation_field_frame,

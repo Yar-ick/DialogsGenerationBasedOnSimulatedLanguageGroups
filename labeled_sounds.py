@@ -7,8 +7,12 @@ def apply_labeled_sounds_to_text(text, labeled_sounds):
 
     for key in labeled_sounds.keys():
         for index in range(len(out_text)):
-            if key in text[index]:
-                out_text[index] = out_text[index].replace(key, labeled_sounds[key])
+            if key in text[index] or key.upper() in text[index]:
+                if key.upper() in text[index]:
+                    out_text[index] = out_text[index].replace(key.upper(), labeled_sounds[key].upper())
+                else:
+                    out_text[index] = out_text[index].replace(key, labeled_sounds[key])
+
                 changed_symbols = []
                 diff = difflib.ndiff(text[index], out_text[index])
                 real_index = 0

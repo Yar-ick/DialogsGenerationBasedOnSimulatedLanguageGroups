@@ -241,14 +241,6 @@ def change_text_word_order(text, word_order, print_debug_info=False):
                     spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
                                                         token.head.text))
             print('\n')
-            # displacy.render(analyzed_part, style='dep', jupyter=False)
-            # options = {
-            #     "compact": True,
-            #     "bg": "#09a3d5",
-            #     "color": "white",
-            #     "font": "Source Sans Pro"
-            # }
-            # displacy.serve(analyzed_part, style="dep", options=options)
 
     svo_phrases.update({"S": subject_phrase_indexes})
     svo_phrases.update({"V": verb_phrase_indexes})
@@ -256,6 +248,5 @@ def change_text_word_order(text, word_order, print_debug_info=False):
 
     if print_debug_info:
         print("SVO Phrases: ", svo_phrases)
-        print("Biggest key in S Phrase: ", max(svo_phrases.values()))
 
     return [out_sentence, svo_phrases]
