@@ -1,10 +1,7 @@
-import string
-
 import spacy
 
 from enum import Enum
 from pymorphy3 import MorphAnalyzer
-from spacy import displacy
 
 
 class WordOrder(Enum):
@@ -236,10 +233,12 @@ def change_text_word_order(text, word_order, print_debug_info=False):
         if print_debug_info:
             print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
             print("==========================================================================================")
+
             for token in analyzed_part:
                 print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
                     spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
                                                         token.head.text))
+
             print('\n')
 
     svo_phrases.update({"S": subject_phrase_indexes})

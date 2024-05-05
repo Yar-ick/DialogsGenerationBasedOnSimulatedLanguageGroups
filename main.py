@@ -6,15 +6,14 @@ import labeled_sounds
 import sv_ttk
 import json
 import os.path
-import nltk
-import difflib
 import time
+import nltk
+import spacy
+import difflib
 
 from characterai import PyCAI
-from deep_translator import GoogleTranslator
 from tkinter import *
 from tkinter import ttk
-# from tktooltip import ToolTip
 from pymorphy3 import MorphAnalyzer
 
 
@@ -25,10 +24,30 @@ def launch_nltk_installer():
 
 def pymorphy_test():
     morph = MorphAnalyzer()
-    parsed_word_variants = morph.parse("правда")
+    text = "Сила заключается в твёрдой верности своей расе и преданности своим братьям"
+    words = text.split()
 
-    for word in parsed_word_variants:
-        print(word)
+    print("Исходный текст: ", text, "\n")
+
+    for word in words:
+        parsed_word = morph.parse(word)[0]
+        print("{0:30}{1:45}{2:1}".format("Parse(word=\'" + parsed_word.word + "\',", "tag=\'" + str(parsed_word.tag) + "\',", "normal_from=\'" + str(parsed_word.normal_form)) + "\')")
+
+
+def spacy_test():
+    text = "Сила заключается в твёрдой верности своей расе и преданности своим братьям"
+    spacy_russian_model = spacy.load("ru_core_news_lg")
+    analyzed_text = spacy_russian_model(text)
+
+    print("Исходный текст: ", text, "\n")
+
+    print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
+    print("==========================================================================================")
+
+    for token in analyzed_text:
+        print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
+            spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
+                                                token.head.text))
 
 
 def ndiff_test():
@@ -36,6 +55,28 @@ def ndiff_test():
     # print('\n'.join(diff))
     print('\n'.join(difflib.Differ().compare("сущего", "сусчеггггго")))
 
+
+def nltk_test():
+    text = "Меня зовут Грумшак. Я орк из клана Кровавый Клык. Я сильный воин."
+    sentence_tokenized_text = nltk.sent_tokenize(text)
+    word_tokenized_text = nltk.word_tokenize(text)
+
+    print("Исходный текст: ", text, "\n")
+
+    print("Токенизация по предложениям:")
+    for i in range(len(sentence_tokenized_text)):
+        print(i, " токен: ", sentence_tokenized_text[i])
+
+    print("")
+
+    print("Токенизация по словам:")
+    for i in range(0, len(word_tokenized_text), 2):
+        if i + 1 != len(word_tokenized_text):
+            first_column_text = str(i) + " токен: " + word_tokenized_text[i]
+            second_column_text = str(i + 1) + " токен: " + word_tokenized_text[i + 1]
+            print("{0:25}{1:25}".format(first_column_text, second_column_text))
+        else:
+            print(i, " токен: ", word_tokenized_text[i])
 
 def launch_tkinter_app():
     def on_notebook_tab_selected(event):
@@ -1535,5 +1576,7 @@ def launch_tkinter_app():
 
 if __name__ == '__main__':
     launch_tkinter_app()
+    # nltk_test()
     # pymorphy_test()
+    # spacy_test()
     # ndiff_test()
