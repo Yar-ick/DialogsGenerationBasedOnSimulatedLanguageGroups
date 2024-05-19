@@ -8,75 +8,11 @@ import json
 import os.path
 import time
 import nltk
-import spacy
-import difflib
 
 from characterai import PyCAI
 from tkinter import *
 from tkinter import ttk
-from pymorphy3 import MorphAnalyzer
 
-
-def launch_nltk_installer():
-    import nltk
-    nltk.download()
-
-
-def pymorphy_test():
-    morph = MorphAnalyzer()
-    text = "Сила заключается в твёрдой верности своей расе и преданности своим братьям"
-    words = text.split()
-
-    print("Исходный текст: ", text, "\n")
-
-    for word in words:
-        parsed_word = morph.parse(word)[0]
-        print("{0:30}{1:45}{2:1}".format("Parse(word=\'" + parsed_word.word + "\',", "tag=\'" + str(parsed_word.tag) + "\',", "normal_from=\'" + str(parsed_word.normal_form)) + "\')")
-
-
-def spacy_test():
-    text = "Сила заключается в твёрдой верности своей расе и преданности своим братьям"
-    spacy_russian_model = spacy.load("ru_core_news_lg")
-    analyzed_text = spacy_russian_model(text)
-
-    print("Исходный текст: ", text, "\n")
-
-    print("\n{0:20}{1:20}{2:35}{3:20}".format("Слово", "Часть речи", "Синтаксическая связь", "Родитель"))
-    print("==========================================================================================")
-
-    for token in analyzed_text:
-        print("{0:20}{1:20}{2:35}{3:20}".format(token.text, token.pos_, (token.dep_ + " (" + (
-            spacy.explain(token.dep_) if isinstance(spacy.explain(token.dep_), str) else "") + ')'),
-                                                token.head.text))
-
-
-def ndiff_test():
-    # diff = difflib.ndiff("что", "шо")
-    # print('\n'.join(diff))
-    print('\n'.join(difflib.Differ().compare("сущего", "сусчеггггго")))
-
-
-def nltk_test():
-    text = "Меня зовут Грумшак. Я орк из клана Кровавый Клык. Я сильный воин."
-    sentence_tokenized_text = nltk.sent_tokenize(text)
-    word_tokenized_text = nltk.word_tokenize(text)
-
-    print("Исходный текст: ", text, "\n")
-
-    print("Токенизация по предложениям:")
-    for i in range(len(sentence_tokenized_text)):
-        print(i, " токен: ", sentence_tokenized_text[i])
-
-    print("")
-
-    print("Токенизация по словам:")
-    for i in range(0, len(word_tokenized_text), 2):
-        if i + 1 != len(word_tokenized_text):
-            first_column_text = str(i) + " токен: " + word_tokenized_text[i]
-            second_column_text = str(i + 1) + " токен: " + word_tokenized_text[i + 1]
-            print("{0:25}{1:25}".format(first_column_text, second_column_text))
-        else:
-            print(i, " токен: ", word_tokenized_text[i])
 
 def launch_tkinter_app():
     def on_notebook_tab_selected(event):
@@ -937,6 +873,9 @@ def launch_tkinter_app():
 
     isolation_degree_legend_frame = ttk.Frame(transformation_legend_frame)
 
+    def on_isolation_degree_style_clicked(event):
+        selected_style.set("isolated_word")
+
     isolation_degree_legend_label = ttk.Label(
         isolation_degree_legend_frame,
         text="А",
@@ -949,6 +888,9 @@ def launch_tkinter_app():
         text=" – изолированное слово",
         font=("Segoe UI", 12)
     )
+
+    isolation_degree_legend_label.bind("<Button-1>", on_isolation_degree_style_clicked)
+    isolation_degree_description_legend_label.bind("<Button-1>", on_isolation_degree_style_clicked)
 
     labeled_sound_legend_frame = ttk.Frame(transformation_legend_frame)
 
@@ -1091,7 +1033,7 @@ def launch_tkinter_app():
                 word_order_result = word_order.change_text_word_order(
                     word_tokens,
                     word_order.WordOrder(fast_language_group["word_order"]),
-                    False
+                    True
                 )
 
                 word_order_end_time = time.time()
@@ -1110,7 +1052,7 @@ def launch_tkinter_app():
 
                 isolation_degree_start_time = time.time()
 
-                isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
+                isolation_degree_result = isolation_degree.change_text_isolation_degree(
                     lexical_units_result[0],
                     fast_language_group["isolation_degree"]
                 )
@@ -1500,7 +1442,7 @@ def launch_tkinter_app():
                             False
                         )
 
-                        isolation_degree_result = isolation_degree.change_text_isolation_degree_list(
+                        isolation_degree_result = isolation_degree.change_text_isolation_degree(
                             lexical_units_result[0],
                             selected_language_group["isolation_degree"]
                         )
@@ -1568,7 +1510,7 @@ def launch_tkinter_app():
     transformation_logo = transformation_logo.subsample(20, 20)
 
     notebook.add(language_group_frame, text="Создание языковой группы", image=language_group_logo, compound=LEFT)
-    notebook.add(text_transformation_frame, text="Преобразовние текста", image=transformation_logo, compound=LEFT)
+    notebook.add(text_transformation_frame, text="Преобразование текста", image=transformation_logo, compound=LEFT)
     notebook.add(generation_frame, text="Общение с персонажем", image=generation_logo, compound=LEFT)
 
     window.mainloop()
@@ -1576,7 +1518,3 @@ def launch_tkinter_app():
 
 if __name__ == '__main__':
     launch_tkinter_app()
-    # nltk_test()
-    # pymorphy_test()
-    # spacy_test()
-    # ndiff_test()

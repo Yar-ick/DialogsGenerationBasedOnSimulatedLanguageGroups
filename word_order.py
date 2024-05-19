@@ -52,7 +52,6 @@ def is_token_from_subject_phrase(token):
 
     # # If token is subject
     # if parsed_token.tag.number is not None:
-    #     # print("Именительный падеж: ", parsed_token.inflect({parsed_token.tag.number, 'nomn'}).word)
     #     if (
     #             token.dep_ == "nsubj"
     #             and
@@ -64,7 +63,9 @@ def is_token_from_subject_phrase(token):
     if (
             token.dep_ == "nsubj" and token.head.dep_ == "ROOT"
             or
-            token.dep_ == "cc" and token.head.head is not None and token.head.head.head.dep_ == "ROOT"
+            token.dep_ == "ROOT" and (token.pos_ == "NOUN" or token.pos_ == "PRON")
+            # or
+            # token.dep_ == "cc" and token.head.head is not None and token.head.head.head.dep_ == "ROOT"
     ):
         return True
     # If token is subject
@@ -152,11 +153,15 @@ def add_phrases_to_sentence(dict_with_parameters):
 
 def change_text_word_order(text, word_order, print_debug_info=False):
     """
-    Return a list of word tokens with changed word order
+    Return a list of list and map:
+
+    List[0] is a list of word tokens with changed word order;
+
+    List[1] is a map with tokens related to one of the three SVO phrases;
 
     :param text: list of work tokens
     :type text: list
-    :param word_order: on of the 6 word order type
+    :param word_order: one of the 6 word order types
     :type word_order: WordOrder
     :param print_debug_info: for printing debug info
     :type print_debug_info: bool
@@ -177,9 +182,6 @@ def change_text_word_order(text, word_order, print_debug_info=False):
 
     if print_debug_info:
         print("Sentence parts:")
-
-    # sentence_text = " ".join(text)
-    # sentence_parts = [sentence_text]
 
     part_index = 0
     for part in sentence_parts:

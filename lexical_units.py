@@ -1,4 +1,3 @@
-from nltk import word_tokenize
 from pymorphy3 import MorphAnalyzer
 from pymystem3 import Mystem
 
@@ -9,7 +8,7 @@ def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
 
     List[0] is a list of word tokens with replaced lexical units;
 
-    List[1] is a list with indexes of replaced tokens
+    List[1] is a set with indexes of replaced lexical units;
 
     :param text: list of work tokens
     :type text: list
@@ -50,7 +49,6 @@ def replace_lexical_units_in_text(text, lexical_units, print_debug_info=False):
             if print_debug_info:
                 print("Gonna replace ", token, " on ", lemmatized_text[index])
 
-            # parsed_word_original_variants = morph.parse(token)
             parsed_word_original_variants = morph.parse(tokenized_text[index])
             parsed_word_replacing_variants = morph.parse(lemmatized_text[index])
 
