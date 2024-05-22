@@ -3,7 +3,7 @@
 
 Разработано в рамках моей магистерской диссертации на факультете [ШРВ](https://itmo.games/) в университете [ИТМО](https://itmo.ru/).
 
-Исходный код располагается на [GitHub](https://github.com/Yar-ick/DialogsGenerationBasedOnSimulatedLanguageGroups).
+Исходный код располагается на [GitHub](./ВКР.pdf).
 
 С полным текстом работы можно ознакомиться также на [GitHub](https://github.com/Yar-ick/DialogsGenerationBasedOnSimulatedLanguageGroups).
 
