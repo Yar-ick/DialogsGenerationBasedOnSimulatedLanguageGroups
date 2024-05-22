@@ -3,9 +3,9 @@
 
 Разработано в рамках моей магистерской диссертации на факультете [ШРВ](https://itmo.games/) в университете [ИТМО](https://itmo.ru/).
 
-Исходный код располагается на [GitHub](./ВКР.pdf).
+Исходный код располагается на [GitHub]([./ВКР.pdf](https://github.com/Yar-ick/DialogsGenerationBasedOnSimulatedLanguageGroups)).
 
-С полным текстом работы можно ознакомиться также на [GitHub](https://github.com/Yar-ick/DialogsGenerationBasedOnSimulatedLanguageGroups).
+С полным текстом работы можно ознакомиться также на ![GitHub](./ВКР.pdf).
 
 ## Демонстрация
 Изображение снизу демонстрирует пример работы алгоритма. Видна разница с исходным текстом, а именно:
